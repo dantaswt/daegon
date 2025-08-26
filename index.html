@@ -1324,7 +1324,7 @@
                 const mostRecentYear = years?.[0] || new Date().getFullYear().toString();
                 appState.currentYear = mostRecentYear;
             } else {
-                const dates = Object.keys(appState.chartData[chartType]);
+                const dates = Object.keys(appState.chartData[chartType]).sort();
                 const mostRecentDate = dates.length > 0 ? dates[dates.length - 1] : null;
                 appState.currentDate = appState.sharedDate || mostRecentDate;
                 if (!appState.chartData[chartType][appState.currentDate]) {
@@ -1402,7 +1402,7 @@
             loadSpotifyImages();
             
             if (!isYearEnd) {
-                const dates = Object.keys(appState.chartData[chartType]);
+                const dates = Object.keys(appState.chartData[chartType]).sort();
                 if (dates.length > 0) {
                     const datePicker = flatpickr("#weekSelector", {
                         enable: dates,
@@ -1416,7 +1416,10 @@
                                 const otherCharts = ['songs', 'artists', 'albums'].filter(c => c !== chartType);
                                 for(const otherChart of otherCharts) {
                                     if (appState.chartData[otherChart][dateStr]) {
-                                        appState.chartData[otherChart].activeDate = dateStr;
+                                        const otherDatePicker = document.querySelector(`.chart-nav-btn[data-chart='${otherChart}']`)._flatpickr;
+                                        if (otherDatePicker) {
+                                            otherDatePicker.setDate(dateStr);
+                                        }
                                     }
                                 }
 
@@ -1426,6 +1429,7 @@
                             }
                         }
                     });
+                    document.querySelector(`.chart-nav-btn[data-chart='${chartType}']`)._flatpickr = datePicker;
                 }
             }
             
@@ -1506,10 +1510,9 @@
                 const diffSymbol = getDiffSymbol(diff);
                 
                 const chartRunKey = `${name.toLowerCase().trim()}:${artist.toLowerCase().trim()}`;
-                const chartRun = appState.chartRunData[chartType]?.[chartRunKey] || [];
 
                 let newPeakBadge = '';
-                if (!isYearEnd && peak && position < peak) {
+                if (!isYearEnd && position > 0 && peak && position < peak) {
                     newPeakBadge = `<span class="badge badge-new-peak">NEW PEAK</span>`;
                 }
 
@@ -1517,7 +1520,7 @@
                 if (!isYearEnd && weeksAt1 && weeksAt1 > 1) {
                     weeksAt1Badge = `<span class="badge badge-weeks-at-1">${weeksAt1} WKS AT #1</span>`;
                 }
-
+                
                 return `
                     <div class="chart-row py-4 px-4 ${position === 1 ? 'rank-1' : ''}">
                         <div class="flex items-center">
@@ -1607,21 +1610,19 @@
                 modalContent.innerHTML = '<p class="text-center text-gray-500">No chart run data available.</p>';
             } else {
                 const listItems = chartRun.map(run => {
-                    const isPeak = run.position === run.peak;
-                    const isNumberOne = run.position === 1;
-
-                    let highlightClass = '';
-                    if (isNumberOne) {
-                        highlightClass = 'text-accent font-bold';
-                    } else if (isPeak) {
-                        highlightClass = 'text-green-500 font-semibold';
+                    let positionBadge = '';
+                    if (run.position === 1) {
+                        positionBadge = `<span class="badge badge-weeks-at-1">#${run.position}</span>`;
+                    } else if (run.position === run.peak) {
+                        positionBadge = `<span class="badge badge-new-peak">#${run.position}</span>`;
+                    } else {
+                         positionBadge = `<span class="font-bold text-secondary">#${run.position}</span>`;
                     }
-                    
+
                     return `
                         <div class="flex justify-between items-center py-2 px-4 border-b border-gray-200">
-                            <span class="font-medium text-secondary">Week of ${run.date}</span>
-                            <span class="text-sm font-semibold ${highlightClass}">#${run.position}</span>
-                            ${isPeak && run.weeks > 1 ? `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">NEW PEAK</span>` : ''}
+                            <span class="font-medium text-gray-500">Week of ${run.date}</span>
+                            ${positionBadge}
                         </div>
                     `;
                 }).join('');
@@ -1715,7 +1716,6 @@
             }
         }
 
-        // --- ALL ENTRIES PAGE FUNCTIONS (SIMPLIFIED) ---
         function showAllEntriesPage() {
             appState.currentView = 'allEntries';
             
@@ -2053,15 +2053,17 @@
             document.querySelectorAll('.chart-nav-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const chartType = this.dataset.chart;
+                    
+                    if (appState.sharedDate) {
+                        appState.currentDate = appState.sharedDate;
+                    }
+
                     showChartPage(chartType);
                 });
             });
             
             const isYearEnd = appState.activeChart.includes('yearEnd');
             if (!isYearEnd) {
-                const dates = Object.keys(appState.chartData[appState.activeChart]);
-                const currentIndex = dates.indexOf(appState.currentDate);
-
                 document.getElementById('prevWeekBtn').addEventListener('click', navigateToPrevWeek);
                 document.getElementById('nextWeekBtn').addEventListener('click', navigateToNextWeek);
                 document.getElementById('bottomPrevWeekBtn').addEventListener('click', navigateToPrevWeek);
@@ -2179,11 +2181,11 @@
                 appContainer.innerHTML = `
                     <div class="max-w-4xl mx-auto text-center p-8">
                         <button id="backButton" class="back-button mb-6 flex items-center text-accent hover:text-accent-dark font-semibold transition-colors">
-                            <i class="fas fa-arrow-left mr-2"></i> Voltar
+                            <i class="fas fa-arrow-left mr-2"></i> Back
                         </button>
                         <i class="fas fa-user-circle text-6xl text-gray-400 mb-4"></i>
-                        <h2 class="text-3xl font-bold text-secondary mb-2">Artista não encontrado</h2>
-                        <p class="text-gray-500">A página do artista solicitada não pode ser encontrada.</p>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Artist not found</h2>
+                        <p class="text-gray-500">The requested artist page could not be found.</p>
                     </div>
                 `;
                 document.getElementById('backButton').addEventListener('click', navigateBack);
