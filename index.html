@@ -535,12 +535,22 @@
             hot100: {
                 url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1019123057',
                 title: 'Hot 100 Songs',
-                type: 'blog'
+                type: 'blog',
+                colMap: {
+                    date: ['date', 'data'],
+                    text: ['text', 'conteúdo'],
+                    image: ['image', 'imagem']
+                }
             },
             top100Albums: {
                 url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=677909186',
                 title: 'Top 100 Albums',
-                type: 'blog'
+                type: 'blog',
+                colMap: {
+                    date: ['date', 'data'],
+                    text: ['text', 'conteúdo'],
+                    image: ['image', 'imagem']
+                }
             }
         };
 
@@ -785,12 +795,10 @@
                 };
                 
                 if (chartType === 'artistStats') {
-                    // Processar dados estatísticos do artista e agrupar
                     appState.artistDetailsData = {};
                     data.forEach(row => {
                         const artistName = row[appState.colMaps.artistStats.artist];
                         if (!artistName) return;
-
                         const chartTypeEntry = row[appState.colMaps.artistStats.chart];
                         const itemName = row[appState.colMaps.artistStats.item];
                         const peak = parseInt(row[appState.colMaps.artistStats.peak]);
@@ -813,14 +821,12 @@
                         }
                     });
 
-                    // Calcular estatísticas agregadas e ordenar
                     for (const artist in appState.artistDetailsData) {
                         for (const chart in appState.artistDetailsData[artist]) {
                             const entries = appState.artistDetailsData[artist][chart];
                             let numberOnes = 0;
                             let topTens = 0;
 
-                            // Ordenar as entradas
                             entries.sort((a, b) => {
                                 if (a.peak !== b.peak) {
                                     return a.peak - b.peak;
@@ -831,7 +837,6 @@
                                 return a.item.localeCompare(b.item);
                             });
 
-                            // Contar estatísticas
                             entries.forEach(entry => {
                                 if (entry.peak === 1) numberOnes++;
                                 if (entry.peak >= 1 && entry.peak <= 10) topTens++;
@@ -846,14 +851,12 @@
                         }
                     }
                 } else if (chartType.includes('yearEnd')) {
-                    // Process year-end charts differently
                     const yearIndex = appState.colMaps[chartType].year;
                     
                     if (yearIndex === -1) {
                         throw new Error(`Year column not found for ${config.title}.`);
                     }
                     
-                    // Group data by year
                     const dataByYear = {};
                     
                     data.forEach(row => {
@@ -869,7 +872,6 @@
                     
                     appState.chartData[chartType] = dataByYear;
                     
-                    // Get top 3 for each year
                     const years = Object.keys(dataByYear).sort((a, b) => b - a);
                     const mostRecentYear = years[0];
                     
@@ -896,36 +898,28 @@
                         throw new Error(`Date column not found for ${config.title}.`);
                     }
                     
-                    // Fix for albums chart - group by week properly
                     let dateGroups = {};
-                    
-                    // For all charts, we need to fix the date grouping issue
-                    // Create a map of dates to normalize them
                     const dateMap = {};
                     
                     data.forEach(row => {
                         const originalDate = row[dateIndex];
                         if (!originalDate) return;
                         
-                        // Normalize date format (assuming DD/MM/YYYY format)
                         let standardizedDate = originalDate;
                         if (originalDate.includes('/')) {
                             const dateParts = originalDate.split('/');
                             if (dateParts.length === 3) {
-                                // Create a standardized date key (YYYY-MM-DD)
                                 standardizedDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
                                 
                                 if (!dateMap[standardizedDate]) {
                                     dateMap[standardizedDate] = originalDate;
                                 }
                                 
-                                // Replace the date in the row with the standardized version
                                 row[dateIndex] = standardizedDate;
                             }
                         }
                     });
                     
-                    // Now group by standardized date
                     data.forEach(row => {
                         const date = row[dateIndex];
                         if (!date) return;
@@ -937,17 +931,14 @@
                         dateGroups[date].push(row);
                     });
                     
-                    // Sort dates chronologically
                     const sortedDates = Object.keys(dateGroups).sort((a, b) => {
                         return new Date(a) - new Date(b);
                     });
                     
-                    // Rebuild the chart data with sorted dates
                     sortedDates.forEach(date => {
                         appState.chartData[chartType][date] = dateGroups[date];
                     });
 
-                    // Collect all entries for All Entries page - simplified version
                     if (['songs', 'artists', 'albums'].includes(chartType)) {
                         appState.allEntries[chartType] = [];
                         const uniqueEntries = new Set();
@@ -960,10 +951,8 @@
                                           row[colMap.artist];
                                 const artist = row[colMap.artist] || 'Unknown';
                                 
-                                // Create a unique key for this entry
                                 const entryKey = `${name.toLowerCase()}_${artist.toLowerCase()}`;
                                 
-                                // Only add if we haven't seen this entry before
                                 if (!uniqueEntries.has(entryKey)) {
                                     uniqueEntries.add(entryKey);
                                     
@@ -980,45 +969,32 @@
                         });
                     }
 
-                    data.forEach(row => {
-                        const date = row[dateIndex];
-                        if (appState.chartData[chartType][date]) {
+                    // A nova lógica do chart-run
+                    appState.chartRunData[chartType] = {};
+                    sortedDates.forEach(date => {
+                        const chartEntries = appState.chartData[chartType][date];
+                        chartEntries.forEach(row => {
                             const colMap = appState.colMaps[chartType];
-                            let name = row[colMap.song] || row[colMap.album] || row[colMap.artist];
-                            name = name.toLowerCase().trim();
-                            const artist = (row[colMap.artist] || '').toLowerCase().trim();
-                            const chartRunKey = `${chartType}:${name}:${artist}`;
-
-                            if (!appState.chartRunData[chartRunKey]) {
-                                appState.chartRunData[chartRunKey] = [];
-                            }
-                            
+                            const name = row[colMap.song] || row[colMap.album] || row[colMap.artist];
+                            const artist = row[colMap.artist] || 'Unknown';
+                            const key = `${name.toLowerCase()}:${artist.toLowerCase()}`;
                             const position = parseInt(row[colMap.position]);
-                            appState.chartRunData[chartRunKey].push({ 
-                                position, 
-                                date,
-                                weeks: parseInt(row[colMap.weeks]) || 0,
-                                weeksAt1: parseInt(row[colMap.weeksAt1]) || 0
-                            });
-                            
-                            // Track weeks at number one
-                            if (position === 1) {
-                                const weeksAt1Key = `${name}:${artist}`;
-                                if (!appState.weeksAtNumberOne[weeksAt1Key]) {
-                                    appState.weeksAtNumberOne[weeksAt1Key] = 0;
-                                }
-                                appState.weeksAtNumberOne[weeksAt1Key]++;
+                            const peak = parseInt(row[colMap.peak]);
+                            const lastWeek = parseInt(row[colMap.lastWeek]);
+
+                            if (!appState.chartRunData[chartType][key]) {
+                                appState.chartRunData[chartType][key] = [];
                             }
-                        }
+
+                            appState.chartRunData[chartType][key].push({
+                                date: date,
+                                position: position,
+                                peak: peak,
+                                lastWeek: lastWeek
+                            });
+                        });
                     });
                     
-                    // Sort chart-run data by date
-                    for(const key in appState.chartRunData) {
-                        appState.chartRunData[key].sort((a,b) => {
-                            return new Date(a.date) - new Date(b.date);
-                        });
-                    }
-
                     const dates = Object.keys(appState.chartData[chartType]);
                     if (dates.length > 0) {
                         const mostRecentDate = dates[dates.length - 1];
@@ -1074,54 +1050,40 @@
                     const header = rows[0].map(h => h.toLowerCase().trim());
                     const data = rows.slice(1);
                     
-                    // Processar dados do blog - INVERTER A ORDEM (mais recente primeiro)
                     const processedData = data.map(row => {
-                        // Encontrar índices das colunas necessárias
-                        const textIndex = header.findIndex(h => h.includes('text') || h.includes('conteúdo'));
-                        const dateIndex = header.findIndex(h => h.includes('date') || h.includes('data'));
+                        const findIndex = (keys) => {
+                            for (const k of keys) {
+                                const index = header.indexOf(k);
+                                if (index !== -1) return index;
+                            }
+                            return -1;
+                        };
+
+                        const textIndex = findIndex(config.colMap.text);
+                        const dateIndex = findIndex(config.colMap.date);
+                        const imageIndex = findIndex(config.colMap.image);
                         
-                        // Extrair o texto completo
                         const fullText = row[textIndex] || '';
-                        
-                        // Extrair a primeira frase (título em maiúsculas)
                         const firstSentenceMatch = fullText.match(/^[^.!?]+[.!?]/);
                         const title = firstSentenceMatch ? firstSentenceMatch[0].toUpperCase() : 'NO TITLE';
-                        
-                        // Extrair o nome do artista (primeira palavra do texto)
                         const artist = fullText.split(' ')[0] || 'UNKNOWN ARTIST';
-                        
-                        // Extrair a data de publicação
                         const publicationDate = row[dateIndex] || 'NO DATE';
+                        const imageUrl = row[imageIndex] || null;
                         
                         return {
                             title,
                             artist,
                             publicationDate,
                             fullText,
-                            imageUrl: null // Será preenchido posteriormente
+                            imageUrl // Agora, a imagem é lida diretamente da planilha
                         };
                     });
                     
-                    // INVERTER A ORDEM: mais recente primeiro
                     appState.chartBeatData[key] = processedData.reverse();
                     
                 } catch (error) {
                     console.error(`Error processing ${key} blog data:`, error);
                     appState.chartBeatData[key] = [];
-                }
-            }
-            
-            // Carregar imagens para os artigos
-            await loadBlogImages();
-        }
-
-        async function loadBlogImages() {
-            for (const [key, articles] of Object.entries(appState.chartBeatData)) {
-                for (let article of articles) {
-                    if (article.artist && article.artist !== 'UNKNOWN ARTIST') {
-                        const imageUrl = await getSpotifyImage(article.artist, 'artist');
-                        article.imageUrl = imageUrl;
-                    }
                 }
             }
         }
@@ -1510,13 +1472,13 @@
             }
             
             return displayItems.map((row, index) => {
-                const position = row[colMap.position] || 0;
+                const position = parseInt(row[colMap.position]) || 0;
                 const artist = row[colMap.artist] || 'Unknown';
                 const diff = colMap.diff !== -1 ? row[colMap.diff] : null;
                 const lastWeek = colMap.lastWeek !== -1 && !chartType.includes('yearEnd') ? row[colMap.lastWeek] : null;
-                const peak = colMap.peak !== -1 ? row[colMap.peak] : null;
+                const peak = colMap.peak !== -1 ? parseInt(row[colMap.peak]) : null;
                 const weeks = colMap.weeks !== -1 ? row[colMap.weeks] : null;
-                const weeksAt1 = colMap.weeksAt1 !== -1 ? row[colMap.weeksAt1] : null;
+                const weeksAt1 = colMap.weeksAt1 !== -1 ? parseInt(row[colMap.weeksAt1]) : null;
                 const units = colMap.units !== -1 ? row[colMap.units] : null;
                 const totalUnits = colMap.totalUnits !== -1 ? row[colMap.totalUnits] : null;
                 const certification = colMap.certification !== -1 ? row[colMap.certification] : null;
@@ -1530,8 +1492,20 @@
                 
                 const hasAward = position === 1 || (diff && diff.includes('▲') && parseInt(diff.replace('▲', '')) > 5);
                 
-                const chartRunKey = `${chartType}:${name.toLowerCase().trim()}:${artist.toLowerCase().trim()}`;
-                const chartRun = appState.chartRunData[chartRunKey] || [];
+                const chartRunKey = `${name.toLowerCase().trim()}:${artist.toLowerCase().trim()}`;
+                const chartRun = appState.chartRunData[chartType]?.[chartRunKey] || [];
+                const currentEntry = chartRun.find(entry => entry.date === appState.currentDate);
+
+                // Lógica para marcadores
+                let newPeakBadge = '';
+                if (currentEntry && currentEntry.peak === currentEntry.position && currentEntry.weeks > 1) {
+                    newPeakBadge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">NEW PEAK</span>`;
+                }
+
+                let weeksAt1Badge = '';
+                if (position === 1 && weeksAt1 > 1) {
+                    weeksAt1Badge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">${weeksAt1} WEEKS AT #1</span>`;
+                }
 
                 return `
                     <div class="chart-row py-4 px-4 ${position === 1 ? 'rank-1' : ''}">
@@ -1551,14 +1525,17 @@
                             <div class="flex-grow min-w-0 text-secondary">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="font-bold truncate item-name" data-name="${name}" data-artist="${artist}" data-type="${chartType}">${name}</p>
+                                        <div class="flex items-center">
+                                            <p class="font-bold truncate item-name">${name}</p>
+                                            ${weeksAt1Badge}
+                                            ${newPeakBadge}
+                                        </div>
                                         <p class="text-gray-500 text-sm truncate">
                                             ${!chartType.includes('Artists') && chartType !== 'artists' ? 
                                                 `<span class="artist-link" data-artist="${artist}">${artist}</span>` : 
                                                 `<span class="artist-page-link" data-artist="${artist}">View Artist Page</span>`}
                                         </p>
                                         ${renderUnitsInfo(units, totalUnits, certification, weeksAt1, chartType)}
-                                        ${renderMiniChartRun(chartRun, chartType)}
                                     </div>
                                 </div>
                                 ${!chartType.includes('yearEnd') ? `
@@ -1568,6 +1545,7 @@
                                     ${weeks ? `<span>WOC: ${weeks}</span>` : ''}
                                 </div>
                                 ` : ''}
+                                ${renderChartRun(chartRun, chartType)}
                             </div>
                         </div>
                     </div>
@@ -1627,6 +1605,44 @@
             
             return `
                 <div class="chart-run-mini items-end" style="height: 15px; background: rgba(0, 206, 209, 0.1); border-radius: 4px; padding: 2px;">
+                    ${barsHtml}
+                </div>
+            `;
+        }
+
+        function renderChartRun(chartRun, chartType) {
+            if (!chartRun || chartRun.length === 0) return '';
+            
+            const maxBars = 12; // Máximo de barras visíveis
+            const startIndex = Math.max(0, chartRun.length - maxBars);
+            const visibleRun = chartRun.slice(startIndex);
+
+            const barsHtml = visibleRun.map(entry => {
+                const active = entry.date === appState.currentDate;
+                const position = entry.position;
+                const isPeak = position === entry.peak;
+                const isNumberOne = position === 1;
+
+                let barColorClass = 'bg-gray-300';
+                if (isNumberOne) {
+                    barColorClass = 'bg-yellow-400';
+                } else if (isPeak) {
+                    barColorClass = 'bg-green-500';
+                }
+
+                // Ajuste para altura da barra
+                const heightPercentage = (1 - (position / 100)) * 100;
+                const heightStyle = `height: ${heightPercentage}%;`;
+
+                return `
+                    <div class="chart-run-bar relative flex-grow h-full rounded-full overflow-hidden cursor-pointer ${active ? 'ring-2 ring-offset-1 ring-accent' : ''}" data-date="${entry.date}" data-chart="${chartType}" title="${entry.position} - ${entry.date}">
+                        <div class="h-full w-full ${barColorClass}" style="${heightStyle}"></div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="chart-run-container flex items-end h-16 w-full mt-4 p-2 bg-gray-100 rounded-lg shadow-inner gap-1">
                     ${barsHtml}
                 </div>
             `;
@@ -1866,7 +1882,7 @@
                                         ${article.imageUrl ? `
                                             <img src="${article.imageUrl}" alt="${article.artist}" class="w-full h-full object-cover article-image">
                                         ` : `
-                                            <div class="w-full h-full placeholder-art">
+                                            <div class="w-full h-48 placeholder-art">
                                                 <i class="fas fa-newspaper text-3xl text-gray-400"></i>
                                             </div>
                                         `}
@@ -1990,12 +2006,11 @@
                     appState.currentView = 'chart';
                     showChartPage(previousState.chart);
                 } else if (previousState.view === 'artist') {
-                    // Voltar para a página de artistas ou para a página anterior
                     const lastNav = appState.navigationHistory[appState.navigationHistory.length - 1];
-                    if(lastNav && lastNav.view === 'allEntriesList' && lastNav.entryType === 'artists') {
+                    if (lastNav && lastNav.view === 'allEntriesList' && lastNav.entryType === 'artists') {
                         showAllArtistsPage();
                     } else if (lastNav && lastNav.view === 'chart') {
-                         showChartPage(lastNav.chart);
+                        showChartPage(lastNav.chart);
                     } else {
                         renderHomePage();
                     }
@@ -2071,6 +2086,19 @@
                             year: appState.currentYear
                         });
                         renderArtistPage(artist);
+                    });
+                });
+            }, 100);
+
+            // Chart Run links
+            setTimeout(() => {
+                document.querySelectorAll('.chart-run-bar').forEach(bar => {
+                    bar.addEventListener('click', function() {
+                        const date = this.dataset.date;
+                        const chart = this.dataset.chart;
+                        appState.currentDate = date;
+                        appState.sharedDate = date;
+                        showChartPage(chart);
                     });
                 });
             }, 100);
