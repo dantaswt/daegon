@@ -602,7 +602,6 @@
             },
             artistData: {},
             chartRunData: {},
-            artistStatsData: {},
             weeksAtNumberOne: {},
             itemDetails: {},
             navigationHistory: [],
@@ -1104,16 +1103,15 @@
                         // Encontrar índices das colunas necessárias
                         const textIndex = header.findIndex(h => h.includes('text') || h.includes('conteúdo'));
                         const dateIndex = header.findIndex(h => h.includes('date') || h.includes('data'));
-                        
+                        const titleIndex = header.findIndex(h => h.includes('title') || h.includes('título'));
+                        const artistIndex = header.findIndex(h => h.includes('artist') || h.includes('artista'));
+
                         // Extrair o texto completo
                         const fullText = row[textIndex] || '';
                         
-                        // Extrair a primeira frase (título em maiúsculas)
-                        const firstSentenceMatch = fullText.match(/^[^.!?]+[.!?]/);
-                        const title = firstSentenceMatch ? firstSentenceMatch[0].toUpperCase() : 'NO TITLE';
-                        
-                        // Extrair o nome do artista (primeira palavra do texto)
-                        const artist = fullText.split(' ')[0] || 'UNKNOWN ARTIST';
+                        // Extrair o título e o artista
+                        const title = row[titleIndex] || 'NO TITLE';
+                        const artist = row[artistIndex] || 'UNKNOWN ARTIST';
                         
                         // Extrair a data de publicação
                         const publicationDate = row[dateIndex] || 'NO DATE';
@@ -1535,11 +1533,11 @@
             }
             
             return displayItems.map((row, index) => {
-                const position = row[colMap.position] || 0;
+                const position = parseInt(row[colMap.position]) || 0;
                 const artist = row[colMap.artist] || 'Unknown';
                 const diff = colMap.diff !== -1 ? row[colMap.diff] : null;
                 const lastWeek = colMap.lastWeek !== -1 && !chartType.includes('yearEnd') ? row[colMap.lastWeek] : null;
-                const peak = colMap.peak !== -1 ? row[colMap.peak] : null;
+                const peak = colMap.peak !== -1 ? parseInt(row[colMap.peak]) : null;
                 const weeks = colMap.weeks !== -1 ? row[colMap.weeks] : null;
                 const weeksAt1 = colMap.weeksAt1 !== -1 ? row[colMap.weeksAt1] : null;
                 const units = colMap.units !== -1 ? row[colMap.units] : null;
@@ -1552,13 +1550,17 @@
                 
                 const diffClass = getDiffClass(diff);
                 const diffSymbol = getDiffSymbol(diff);
-                const isNewPeak = !chartType.includes('yearEnd') && parseInt(position) === parseInt(peak) && parseInt(position) !== parseInt(lastWeek);
+
+                // Apenas NEW PEAK se a posição atual for igual ao pico E não for um item novo (lastWeek != 'NEW')
+                const isNewPeak = peak && position === peak && (lastWeek !== 'NEW' && lastWeek !== '-' && lastWeek !== '0');
+                const isWeeksAt1 = weeksAt1 && parseInt(weeksAt1) > 0;
                 
                 const chartRunKey = `${chartType}:${name.toLowerCase().trim()}:${artist.toLowerCase().trim()}`;
                 const chartRun = appState.chartRunData[chartRunKey] || [];
+                const weeksAt1Count = chartRun.filter(week => week.position === 1).length;
 
                 return `
-                    <div class="chart-row py-4 px-4 ${position === 1 ? 'rank-1' : ''}">
+                    <div class="chart-row py-4 px-4 ${position === 1 ? 'rank-1' : ''} cursor-pointer" onclick="showItemDetails('${chartRunKey}')">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 w-10 text-center relative text-secondary">
                                 <span class="text-xl font-bold">${position}</span>
@@ -1573,31 +1575,52 @@
                                 </div>
                             </div>
                             <div class="flex-grow min-w-0 text-secondary">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="font-bold truncate item-name" data-name="${name}" data-artist="${artist}" data-type="${chartType}">${name}</p>
-                                        <p class="text-gray-500 text-sm truncate">
-                                            ${!chartType.includes('Artists') && chartType !== 'artists' ? 
-                                                `<span class="artist-link" data-artist="${artist}">${artist}</span>` : 
-                                                `<span class="artist-page-link" data-artist="${artist}">View Artist Page</span>`}
-                                        </p>
-                                        ${renderUnitsInfo(units, totalUnits, certification, weeksAt1, chartType)}
-                                    </div>
-                                    ${weeksAt1 && weeksAt1 > 0 ? `<div class="weeks-at-1-badge ml-2">${weeksAt1} WEEKS AT #1</div>` : ''}
+                                <div class="flex items-center">
+                                    <p class="font-bold truncate item-name" data-name="${name}" data-artist="${artist}" data-type="${chartType}">${name}</p>
+                                    ${isWeeksAt1 ? `<div class="weeks-at-1-badge ml-2">${weeksAt1Count} WEEKS AT #1</div>` : ''}
                                 </div>
-                                ${!chartType.includes('yearEnd') ? `
+                                <p class="text-gray-500 text-sm truncate">
+                                    ${!chartType.includes('Artists') && chartType !== 'artists' ? 
+                                        `<span class="artist-link" data-artist="${artist}">${artist}</span>` : 
+                                        `<span class="artist-page-link" data-artist="${artist}">View Artist Page</span>`}
+                                </p>
                                 <div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
                                     <span>LW: ${lastWeek === '0' || lastWeek?.toLowerCase() === 're' ? '-' : lastWeek}</span>
                                     ${peak ? `<span>PK: ${peak}</span>` : ''}
                                     ${weeks ? `<span>WOC: ${weeks}</span>` : ''}
                                 </div>
-                                ` : ''}
-                                ${renderMiniChartRun(chartRun, chartType, isNewPeak)}
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function showItemDetails(chartRunKey) {
+            const chartRun = appState.chartRunData[chartRunKey];
+            if (!chartRun || chartRun.length === 0) {
+                alert('No detailed chart run data available for this item.');
+                return;
+            }
+
+            const [chartType, name, artist] = chartRunKey.split(':');
+            
+            // Generate HTML for the chart run history
+            const historyHtml = chartRun.map(run => `
+                <div class="flex items-center justify-between py-2 border-b border-gray-200">
+                    <span class="font-semibold text-secondary w-1/4">${run.date}</span>
+                    <span class="text-sm text-gray-500 w-3/4 text-right">Position: <span class="font-bold text-secondary">#${run.position}</span></span>
+                </div>
+            `).join('');
+
+            modalContent.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">${name} - ${artist}</h3>
+                <p class="text-sm text-gray-500 mb-6">Chart history on ${chartsConfig[chartType].title}</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    ${historyHtml}
+                </div>
+            `;
+            itemDetailsModal.classList.add('active');
         }
 
         function renderUnitsInfo(units, totalUnits, certification, weeksAt1, chartType) {
@@ -1620,11 +1643,6 @@
             if (certification) {
                 html += `<span class="text-sm ml-2">${certification}</span>`;
             }
-            
-            // This is now handled by the separate badge
-            // if (weeksAt1) {
-            //     html += `<span class="text-xs text-accent font-bold mt-1 block">${weeksAt1} weeks at #1</span>`;
-            // }
             
             return html ? `<div class="mt-1">${html}</div>` : '';
         }
@@ -1904,7 +1922,7 @@
                                     <div class="p-4">
                                         <span class="text-xs text-accent font-semibold">${article.publicationDate}</span>
                                         <h4 class="font-bold text-lg mt-1 mb-2 text-secondary truncate">${article.title}</h4>
-                                        <p class="text-gray-500 text-sm line-clamp-3">${article.fullText.substring(article.title.length, 150)}...</p>
+                                        <p class="text-gray-500 text-sm line-clamp-3">${article.fullText.substring(0, 150)}...</p>
                                         <button class="read-more-btn mt-3 text-accent text-sm font-semibold" data-article-index="${index}">
                                             Read More <i class="fas fa-arrow-right ml-1 text-xs"></i>
                                         </button>
@@ -1937,7 +1955,7 @@
                                         <div class="md:w-3/4 md:pl-6">
                                             <span class="text-xs text-accent font-semibold">${article.publicationDate}</span>
                                             <h4 class="font-bold text-lg mt-1 mb-2 text-secondary">${article.title}</h4>
-                                            <p class="text-gray-500 text-sm">${article.fullText.substring(article.title.length, 200)}...</p>
+                                            <p class="text-gray-500 text-sm">${article.fullText.substring(0, 200)}...</p>
                                             <button class="read-more-btn mt-3 text-accent text-sm font-semibold" data-article-index="${index}">
                                                 Read More <i class="fas fa-arrow-right ml-1 text-xs"></i>
                                             </button>
@@ -2204,7 +2222,7 @@
 
                 const chartEntriesHtml = chartData.entries.map((entry, index) => `
                     <div class="flex items-center py-2 px-4 border-b border-gray-200 last:border-b-0">
-                        <div class="flex-shrink-0 mr-4 w-12 h-12 rounded-md overflow-hidden placeholder-art" id="artist-item-image-${index}">
+                        <div class="flex-shrink-0 mr-4 w-12 h-12 rounded-md overflow-hidden placeholder-art" id="artist-item-image-${chartName.replace(/\s/g, '-')}-${index}">
                             <i class="fas fa-compact-disc text-xl text-gray-400"></i>
                         </div>
                         <div class="flex-grow">
@@ -2261,7 +2279,7 @@
             loadArtistImage(artistName);
 
             // Carregar imagens para os itens do artista
-            loadArtistItemImages(artistName);
+            loadArtistItemImages(artistName, artistData);
         }
 
         async function loadArtistImage(artistName) {
@@ -2273,22 +2291,22 @@
             }
         }
         
-        async function loadArtistItemImages(artistName) {
-            const artistData = appState.artistDetailsData[artistName];
+        async function loadArtistItemImages(artistName, artistData) {
             if (!artistData) return;
-
-            const songEntries = artistData['Hot 100 Songs']?.entries || [];
-            const albumEntries = artistData['Top 100 Albums']?.entries || [];
-            const allItems = [...songEntries, ...albumEntries];
+            const allItems = [
+                ...(artistData['Hot 100 Songs']?.entries || []),
+                ...(artistData['Top 100 Albums']?.entries || [])
+            ];
             
             for (let i = 0; i < allItems.length; i++) {
                 const item = allItems[i];
+                const chartName = item.item === artistData['Hot 100 Songs']?.entries[i]?.item ? 'Hot-100-Songs' : 'Top-100-Albums';
                 const query = `${artistName} ${item.item}`;
-                const type = songEntries.includes(item) ? 'album' : 'album'; // Use album search for both songs and albums
+                const type = 'album'; 
                 
                 try {
                     const imageUrl = await getSpotifyImage(query, type);
-                    const imageElement = document.getElementById(`artist-item-image-${i}`);
+                    const imageElement = document.getElementById(`artist-item-image-${chartName}-${i}`);
                     if (imageElement && imageUrl) {
                         imageElement.innerHTML = `<img src="${imageUrl}" alt="${item.item}" class="w-full h-full object-cover">`;
                         imageElement.classList.remove('placeholder-art');
