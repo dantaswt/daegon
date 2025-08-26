@@ -1512,12 +1512,15 @@
                 const chartRunKey = `${name.toLowerCase().trim()}:${artist.toLowerCase().trim()}`;
 
                 let newPeakBadge = '';
-                if (!isYearEnd && position > 0 && peak && position < peak) {
-                    newPeakBadge = `<span class="badge badge-new-peak">NEW PEAK</span>`;
+                if (!isYearEnd && position > 0 && lastWeek && position < parseInt(lastWeek)) {
+                    const currentPeak = appState.chartRunData[chartType]?.[chartRunKey]?.find(entry => entry.date === appState.currentDate)?.peak;
+                    if (currentPeak === position) {
+                         newPeakBadge = `<span class="badge badge-new-peak">NEW PEAK</span>`;
+                    }
                 }
 
                 let weeksAt1Badge = '';
-                if (!isYearEnd && weeksAt1 && weeksAt1 > 1) {
+                if (!isYearEnd && weeksAt1 && weeksAt1 > 0) {
                     weeksAt1Badge = `<span class="badge badge-weeks-at-1">${weeksAt1} WKS AT #1</span>`;
                 }
                 
@@ -1610,19 +1613,21 @@
                 modalContent.innerHTML = '<p class="text-center text-gray-500">No chart run data available.</p>';
             } else {
                 const listItems = chartRun.map(run => {
-                    let positionBadge = '';
-                    if (run.position === 1) {
-                        positionBadge = `<span class="badge badge-weeks-at-1">#${run.position}</span>`;
-                    } else if (run.position === run.peak) {
-                        positionBadge = `<span class="badge badge-new-peak">#${run.position}</span>`;
-                    } else {
-                         positionBadge = `<span class="font-bold text-secondary">#${run.position}</span>`;
-                    }
+                    const isPeak = run.position === run.peak;
+                    const isNumberOne = run.position === 1;
 
+                    let highlightClass = '';
+                    if (isNumberOne) {
+                        highlightClass = 'text-accent font-bold';
+                    } else if (isPeak) {
+                        highlightClass = 'text-green-500 font-semibold';
+                    }
+                    
                     return `
                         <div class="flex justify-between items-center py-2 px-4 border-b border-gray-200">
                             <span class="font-medium text-gray-500">Week of ${run.date}</span>
-                            ${positionBadge}
+                            <span class="text-sm font-semibold ${highlightClass}">#${run.position}</span>
+                            ${isPeak && run.weeks > 1 ? `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">NEW PEAK</span>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -2044,9 +2049,6 @@
             renderChartBeatPage();
         }
 
-        // --- FUNÇÃO calculateArtistStats REMOVIDA ---
-
-        // --- SETUP FUNCTIONS ---
         function setupChartPageListeners() {
             document.getElementById('backButton').addEventListener('click', navigateBack);
             
