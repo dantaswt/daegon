@@ -45,6 +45,10 @@
             background-color: var(--accent);
             color: var(--secondary);
         }
+        .chart-nav-btn.goat-active {
+            background-color: var(--gold);
+            color: var(--secondary);
+        }
         .chart-row {
             transition: all 0.2s ease;
             border-bottom: 1px solid rgba(17, 24, 39, 0.1);
@@ -100,6 +104,10 @@
             margin-left: -5px;
             padding-left: 15px;
             transition: all 0.3s ease;
+        }
+        .rank-1.goat {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 5px solid var(--gold);
         }
         .rank-1 .text-muted {
             color: rgba(17, 24, 39, 0.7) !important;
@@ -442,6 +450,31 @@
             background-color: #3b82f6; /* Cor azul */
             color: #fff;
         }
+        /* Novos estilos para GOAT */
+        .goat-title::after {
+            background: var(--gold);
+        }
+        .goat-card-border {
+            border: 1px solid var(--gold) !important;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+        }
+        .goat-nav-btn.active {
+            background-color: var(--gold) !important;
+            color: var(--secondary) !important;
+        }
+        .goat-text {
+            color: var(--gold);
+        }
+        .goat-highlight {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 5px solid var(--gold);
+            border-radius: 5px;
+            margin-left: -5px;
+            padding-left: 15px;
+        }
+        .rank-1.goat .diff-indicator {
+            color: var(--gold) !important;
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -529,6 +562,27 @@
                 icon: 'fa-calendar',
                 loaded: false
             },
+            goatSongs: {
+                url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1157278896',
+                title: 'Greatest of All Time: Songs',
+                entityType: 'song',
+                icon: 'fa-trophy',
+                loaded: false
+            },
+            goatArtists: {
+                url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=222299678',
+                title: 'Greatest of All Time: Artists',
+                entityType: 'artist',
+                icon: 'fa-trophy',
+                loaded: false
+            },
+            goatAlbums: {
+                url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1548244755',
+                title: 'Greatest of All Time: Albums',
+                entityType: 'album',
+                icon: 'fa-trophy',
+                loaded: false
+            },
             artistStats: {
                 url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1519606558',
                 title: 'Artist Statistics',
@@ -576,6 +630,9 @@
                 yearEndSongs: {},
                 yearEndArtists: {},
                 yearEndAlbums: {},
+                goatSongs: {},
+                goatArtists: {},
+                goatAlbums: {},
                 artistStats: {}
             },
             currentDate: null,
@@ -590,6 +647,9 @@
                 yearEndSongs: {},
                 yearEndArtists: {},
                 yearEndAlbums: {},
+                goatSongs: {},
+                goatArtists: {},
+                goatAlbums: {},
                 artistStats: {}
             },
             top3Data: {
@@ -598,7 +658,10 @@
                 albums: [],
                 yearEndSongs: [],
                 yearEndArtists: [],
-                yearEndAlbums: []
+                yearEndAlbums: [],
+                goatSongs: [],
+                goatArtists: [],
+                goatAlbums: []
             },
             artistData: {},
             chartRunData: {},
@@ -857,44 +920,21 @@
                             };
                         }
                     }
-                } else if (chartType.includes('yearEnd')) {
-                    const yearIndex = appState.colMaps[chartType].year;
-                    
-                    if (yearIndex === -1) {
-                        throw new Error(`Year column not found for ${config.title}.`);
-                    }
-                    
-                    const dataByYear = {};
-                    
-                    data.forEach(row => {
-                        const year = row[yearIndex];
-                        if (!year) return;
+                } else if (chartType.includes('yearEnd') || chartType.includes('goat')) {
+                    if (data.length > 0) {
+                        appState.chartData[chartType] = data;
                         
-                        if (!dataByYear[year]) {
-                            dataByYear[year] = [];
-                        }
-                        
-                        dataByYear[year].push(row);
-                    });
-                    
-                    appState.chartData[chartType] = dataByYear;
-                    
-                    const years = Object.keys(dataByYear).sort((a, b) => b - a);
-                    const mostRecentYear = years?.[0];
-                    
-                    if (mostRecentYear && dataByYear[mostRecentYear]) {
-                        appState.top3Data[chartType] = dataByYear[mostRecentYear]
-                            .slice(0, 3)
+                        const colMap = appState.colMaps[chartType];
+                        appState.top3Data[chartType] = data.slice(0, 3)
                             .map(row => {
-                                const colMap = appState.colMaps[chartType];
-                                const name = chartType === 'yearEndSongs' ? row[colMap.song] : 
-                                             chartType === 'yearEndAlbums' ? row[colMap.album] : 
+                                const name = chartType.includes('Songs') ? row[colMap.song] : 
+                                             chartType.includes('Albums') ? row[colMap.album] : 
                                              row[colMap.artist];
                                 return {
                                     position: row[colMap.position] || 0,
                                     artist: row[colMap.artist] || 'Unknown',
                                     name: name || 'Unknown',
-                                    year: mostRecentYear
+                                    year: row[colMap.year] || 'N/A'
                                 };
                             });
                     }
@@ -1198,6 +1238,15 @@
                             ${renderChartCard('yearEndAlbums', 'Year-End Albums')}
                         </div>
                     </div>
+
+                    <div class="mb-16">
+                        <h3 class="text-2xl font-bold mb-6 section-title goat-title">Greatest of All Time</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            ${renderChartCard('goatSongs', 'GOAT Songs')}
+                            ${renderChartCard('goatArtists', 'GOAT Artists')}
+                            ${renderChartCard('goatAlbums', 'GOAT Albums')}
+                        </div>
+                    </div>
                 </div>
             `;
             
@@ -1248,7 +1297,7 @@
             const top3 = appState.top3Data[chartType] || [];
             
             return `
-                <div class="chart-card cursor-pointer bg-white border border-gray-200 rounded-lg p-4 transition-all duration-300 hover:border-accent shadow-sm" data-chart="${chartType}">
+                <div class="chart-card cursor-pointer bg-white border border-gray-200 rounded-lg p-4 transition-all duration-300 hover:border-accent shadow-sm ${chartType.includes('goat') ? 'hover:border-gold goat-card-border' : ''}" data-chart="${chartType}">
                     <div class="flex items-center justify-between mb-3">
                         <h4 class="font-semibold text-secondary">${title}</h4>
                         <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">Top ${top3.length}</span>
@@ -1256,7 +1305,7 @@
                     <div class="space-y-2">
                         ${top3.length > 0 ? top3.map((item, index) => `
                             <div class="flex items-center text-sm text-secondary">
-                                <span class="font-bold w-6 ${index === 0 ? 'text-accent' : 'text-gray-500'}">${item.position}</span>
+                                <span class="font-bold w-6 ${index === 0 ? 'text-accent' : 'text-gray-500'} ${chartType.includes('goat') && index === 0 ? 'goat-text' : ''}">${item.position}</span>
                                 <span class="truncate">${item.name}</span>
                             </div>
                         `).join('') : `
@@ -1317,6 +1366,7 @@
             appState.currentView = 'chart';
             
             const isYearEnd = chartType.includes('yearEnd');
+            const isGoat = chartType.includes('goat');
             
             if (isYearEnd) {
                 const yearsData = appState.chartData[chartType];
@@ -1327,14 +1377,19 @@
                 const dates = Object.keys(appState.chartData[chartType]);
                 const mostRecentDate = dates.length > 0 ? dates[dates.length - 1] : null;
                 appState.currentDate = appState.sharedDate || mostRecentDate;
-                if (!appState.chartData[chartType][appState.currentDate]) {
+                if (!appState.chartData[chartType][appState.currentDate] && !isGoat) {
                     appState.currentDate = mostRecentDate;
                     appState.sharedDate = mostRecentDate;
                 }
             }
             
-            const headerTitle = isYearEnd ? 'Year-End Charts' : 'Weekly Charts';
-            
+            const headerTitle = isYearEnd ? 'Year-End Charts' : isGoat ? 'Greatest of All Time' : 'Weekly Charts';
+            const navCharts = isYearEnd ? 
+                Object.entries(chartsConfig).filter(([key]) => key.includes('yearEnd')) :
+                isGoat ? 
+                Object.entries(chartsConfig).filter(([key]) => key.includes('goat')) :
+                Object.entries(chartsConfig).filter(([key]) => !key.includes('yearEnd') && !key.includes('goat') && key !== 'artistStats');
+
             appContainer.innerHTML = `
                 <div class="max-w-4xl mx-auto">
                     <button id="backButton" class="back-button mb-6 flex items-center text-accent hover:text-accent-dark font-semibold transition-colors">
@@ -1344,10 +1399,8 @@
                     <div class="mb-6">
                         <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2 text-secondary">${headerTitle}</h2>
                         <div id="chartNav" class="flex flex-wrap justify-center border-b border-gray-200">
-                            ${Object.entries(chartsConfig)
-                                .filter(([key]) => isYearEnd ? key.includes('yearEnd') : !key.includes('yearEnd') && key !== 'artistStats')
-                                .map(([key, config]) => `
-                                <button data-chart="${key}" class="chart-nav-btn btn-hover ${appState.activeChart === key ? 'active' : ''} text-sm font-semibold py-2 px-4 text-gray-500 hover:text-secondary focus:outline-none transition-all">
+                            ${navCharts.map(([key, config]) => `
+                                <button data-chart="${key}" class="chart-nav-btn btn-hover ${appState.activeChart === key ? (isGoat ? 'goat-active' : 'active') : ''} text-sm font-semibold py-2 px-4 text-gray-500 hover:text-secondary focus:outline-none transition-all">
                                     ${config.title}
                                 </button>
                             `).join('')}
@@ -1365,7 +1418,7 @@
                                 ${getYearButtons(chartType)}
                             </div>
                         </div>
-                        ` : `
+                        ` : isGoat ? '' : `
                         <div class="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4">
                             <div class="flex items-center gap-2 text-secondary">
                                 <label for="weekSelector" class="text-gray-500 font-medium">Select Week:</label>
@@ -1385,7 +1438,7 @@
                         ${renderChartItems()}
                     </div>
                     
-                    ${!isYearEnd ? `
+                    ${!isYearEnd && !isGoat ? `
                     <div class="bottom-nav flex justify-center items-center gap-3 mt-6">
                         <button id="bottomPrevWeekBtn" class="p-2 rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors btn-hover" title="Previous Week">
                             <i class="fas fa-chevron-left text-sm mr-1"></i> Previous Week
@@ -1401,7 +1454,7 @@
             setupChartPageListeners();
             loadSpotifyImages();
             
-            if (!isYearEnd) {
+            if (!isYearEnd && !isGoat) {
                 const dates = Object.keys(appState.chartData[chartType]);
                 if (dates.length > 0) {
                     const datePicker = flatpickr("#weekSelector", {
@@ -1460,15 +1513,13 @@
             
             let items = [];
             const isYearEnd = chartType.includes('yearEnd');
+            const isGoat = chartType.includes('goat');
 
-            if (isYearEnd) {
-                const yearsData = appState.chartData[chartType];
-                if (!yearsData) return '<div class="text-center p-8 text-gray-500">No data available</div>';
-                
-                const yearData = yearsData[appState.currentYear];
-                if (!yearData) return '<div class="text-center p-8 text-gray-500">No data available for this year</div>';
-                
-                items = yearData;
+            if (isYearEnd || isGoat) {
+                items = appState.chartData[chartType];
+                if (!items || items.length === 0) {
+                    return '<div class="text-center p-8 text-gray-500">No data available</div>';
+                }
             } else {
                 if (!appState.currentDate || !appState.chartData[chartType][appState.currentDate]) {
                     return '<div class="text-center p-8 text-gray-500">No data available</div>';
@@ -1477,10 +1528,12 @@
             }
             
             const sortedItems = [...items].sort((a, b) => {
-                return parseInt(a[colMap.position]) - parseInt(b[colMap.position]);
+                const posA = isYearEnd || isGoat ? parseInt(a[colMap.position]) : parseInt(a[colMap.position]);
+                const posB = isYearEnd || isGoat ? parseInt(b[colMap.position]) : parseInt(b[colMap.position]);
+                return posA - posB;
             });
             
-            const displayItems = isYearEnd ? sortedItems.slice(0, 100) : sortedItems.slice(0, 100);
+            const displayItems = sortedItems.slice(0, 100);
             
             if (displayItems.length === 0) {
                 return '<div class="text-center p-8 text-gray-500">No data available</div>';
@@ -1490,7 +1543,7 @@
                 const position = parseInt(row[colMap.position]) || 0;
                 const artist = row[colMap.artist] || 'Unknown';
                 const diff = colMap.diff !== -1 ? row[colMap.diff] : null;
-                const lastWeek = colMap.lastWeek !== -1 && !isYearEnd ? row[colMap.lastWeek] : null;
+                const lastWeek = colMap.lastWeek !== -1 && !isYearEnd && !isGoat ? row[colMap.lastWeek] : null;
                 const peak = colMap.peak !== -1 ? parseInt(row[colMap.peak]) : null;
                 const weeks = colMap.weeks !== -1 ? parseInt(row[colMap.weeks]) : null;
                 const weeksAt1 = colMap.weeksAt1 !== -1 ? parseInt(row[colMap.weeksAt1]) : null;
@@ -1509,21 +1562,21 @@
                 const chartRun = appState.chartRunData[chartType]?.[chartRunKey] || [];
 
                 let newPeakBadge = '';
-                if (!isYearEnd && peak && position < peak) {
+                if (!isYearEnd && !isGoat && peak && position < peak) {
                     newPeakBadge = `<span class="badge badge-new-peak">NEW PEAK</span>`;
                 }
 
                 let weeksAt1Badge = '';
-                if (!isYearEnd && weeksAt1 && weeksAt1 > 1) {
+                if (!isYearEnd && !isGoat && weeksAt1 && weeksAt1 > 1) {
                     weeksAt1Badge = `<span class="badge badge-weeks-at-1">${weeksAt1} WKS AT #1</span>`;
                 }
 
                 return `
-                    <div class="chart-row py-4 px-4 ${position === 1 ? 'rank-1' : ''}">
+                    <div class="chart-row py-4 px-4 ${position === 1 ? (isGoat ? 'rank-1 goat' : 'rank-1') : ''}">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 w-10 text-center relative text-secondary">
                                 <span class="text-xl font-bold">${position}</span>
-                                ${!isYearEnd && diffSymbol ? `<span class="diff-indicator ml-1 text-xs font-semibold ${diffClass}">${diffSymbol}</span>` : ''}
+                                ${!isYearEnd && !isGoat && diffSymbol ? `<span class="diff-indicator ml-1 text-xs font-semibold ${diffClass}">${diffSymbol}</span>` : ''}
                             </div>
                             <div class="flex-shrink-0 mx-4">
                                 <div class="w-12 h-12 rounded-md shadow-md overflow-hidden spotify-image" id="image-${chartType}-${index}">
@@ -1548,11 +1601,17 @@
                                         ${renderUnitsInfo(units, totalUnits, certification, weeksAt1, chartType)}
                                     </div>
                                 </div>
-                                ${!isYearEnd ? `
+                                ${!isYearEnd && !isGoat ? `
                                 <div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
                                     <span>LW: ${lastWeek === '0' || lastWeek?.toLowerCase() === 're' ? '-' : lastWeek}</span>
                                     ${peak ? `<span>PK: ${peak}</span>` : ''}
                                     ${weeks ? `<span>WOC: ${weeks}</span>` : ''}
+                                </div>
+                                ` : ''}
+                                ${isGoat ? `
+                                <div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                                    ${peak ? `<span>Peak: #${peak}</span>` : ''}
+                                    ${weeks ? `<span>Weeks: ${weeks}</span>` : ''}
                                 </div>
                                 ` : ''}
                                 ${renderChartRunLink(chartRun, chartType, name, artist)}
@@ -1570,10 +1629,8 @@
                 if (units && units !== '0') {
                     html += `<span class="text-xs text-gray-500 mt-1 block">${units} units</span>`;
                 }
-            } else {
-                if (units) {
-                    html += `<span class="text-xs text-gray-500 mt-1 block">${units} units</span>`;
-                }
+            } else if (units && units !== '0') {
+                 html += `<span class="text-xs text-gray-500 mt-1 block">${units} units</span>`;
             }
             
             if (totalUnits) {
@@ -1588,7 +1645,7 @@
         }
         
         function renderChartRunLink(chartRun, chartType, name, artist) {
-            if (!chartRun || chartRun.length === 0 || chartType.includes('yearEnd')) return '';
+            if (!chartRun || chartRun.length === 0 || chartType.includes('yearEnd') || chartType.includes('goat')) return '';
             const key = `${name.toLowerCase().trim()}:${artist.toLowerCase().trim()}`;
             return `
                 <div class="mt-2 text-xs font-semibold">
@@ -1663,15 +1720,10 @@
             
             let items = [];
             const isYearEnd = chartType.includes('yearEnd');
+            const isGoat = chartType.includes('goat');
 
-            if (isYearEnd) {
-                const yearsData = appState.chartData[chartType];
-                if (!yearsData) return;
-                
-                const yearData = yearsData[appState.currentYear];
-                if (!yearData) return;
-                
-                items = yearData;
+            if (isYearEnd || isGoat) {
+                items = appState.chartData[chartType];
             } else {
                 if (!appState.currentDate || !appState.chartData[chartType][appState.currentDate]) {
                     return;
@@ -2058,8 +2110,10 @@
             });
             
             const isYearEnd = appState.activeChart.includes('yearEnd');
-            if (!isYearEnd) {
-                const dates = Object.keys(appState.chartData[appState.activeChart]);
+            const isGoat = appState.activeChart.includes('goat');
+
+            if (!isYearEnd && !isGoat) {
+                const dates = Object.keys(appState.chartData[appState.activeChart]).sort();
                 const currentIndex = dates.indexOf(appState.currentDate);
 
                 document.getElementById('prevWeekBtn').addEventListener('click', navigateToPrevWeek);
@@ -2363,6 +2417,9 @@
                     fetchAndProcessChartData('yearEndSongs'),
                     fetchAndProcessChartData('yearEndArtists'),
                     fetchAndProcessChartData('yearEndAlbums'),
+                    fetchAndProcessChartData('goatSongs'),
+                    fetchAndProcessChartData('goatArtists'),
+                    fetchAndProcessChartData('goatAlbums'),
                     fetchAndProcessChartData('artistStats'),
                     fetchAndProcessChartBeatData()
                 ]);
