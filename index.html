@@ -538,6 +538,7 @@
                 type: 'blog',
                 colMap: {
                     date: ['date', 'data'],
+                    title: ['title', 'título'], // Nova coluna
                     text: ['text', 'conteúdo'],
                     image: ['image', 'imagem']
                 }
@@ -548,6 +549,7 @@
                 type: 'blog',
                 colMap: {
                     date: ['date', 'data'],
+                    title: ['title', 'título'], // Nova coluna
                     text: ['text', 'conteúdo'],
                     image: ['image', 'imagem']
                 }
@@ -1059,23 +1061,21 @@
                             return -1;
                         };
 
-                        const textIndex = findIndex(config.colMap.text);
                         const dateIndex = findIndex(config.colMap.date);
+                        const titleIndex = findIndex(config.colMap.title); // Usar nova coluna 'Title'
                         const imageIndex = findIndex(config.colMap.image);
-                        
-                        const fullText = row[textIndex] || '';
-                        const firstSentenceMatch = fullText.match(/^[^.!?]+[.!?]/);
-                        const title = firstSentenceMatch ? firstSentenceMatch[0].toUpperCase() : 'NO TITLE';
-                        const artist = fullText.split(' ')[0] || 'UNKNOWN ARTIST';
+                        const textIndex = findIndex(config.colMap.text);
+
                         const publicationDate = row[dateIndex] || 'NO DATE';
+                        const title = row[titleIndex] || 'NO TITLE';
                         const imageUrl = row[imageIndex] || null;
+                        const fullText = row[textIndex] || 'No content available.';
                         
                         return {
                             title,
-                            artist,
                             publicationDate,
-                            fullText,
-                            imageUrl // Agora, a imagem é lida diretamente da planilha
+                            imageUrl,
+                            fullText
                         };
                     });
                     
@@ -1120,9 +1120,9 @@
                                 <div class="blog-card bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm cursor-pointer" onclick="showChartBeatPage()">
                                     <div class="h-48 overflow-hidden relative">
                                         ${featuredHot100.imageUrl ? `
-                                            <img src="${featuredHot100.imageUrl}" alt="${featuredHot100.artist}" class="w-full h-full object-cover article-image">
+                                            <img src="${featuredHot100.imageUrl}" alt="${featuredHot100.title}" class="w-full h-full object-cover article-image">
                                         ` : `
-                                            <div class="w-full h-full placeholder-art">
+                                            <div class="w-full h-48 placeholder-art">
                                                 <i class="fas fa-newspaper text-3xl text-gray-400"></i>
                                             </div>
                                         `}
@@ -1138,9 +1138,9 @@
                                 <div class="blog-card bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm cursor-pointer" onclick="showChartBeatPage()">
                                     <div class="h-48 overflow-hidden relative">
                                         ${featuredTop100.imageUrl ? `
-                                            <img src="${featuredTop100.imageUrl}" alt="${featuredTop100.artist}" class="w-full h-full object-cover article-image">
+                                            <img src="${featuredTop100.imageUrl}" alt="${featuredTop100.title}" class="w-full h-full object-cover article-image">
                                         ` : `
-                                            <div class="w-full h-full placeholder-art">
+                                            <div class="w-full h-48 placeholder-art">
                                                 <i class="fas fa-newspaper text-3xl text-gray-400"></i>
                                             </div>
                                         `}
@@ -1494,17 +1494,16 @@
                 
                 const chartRunKey = `${name.toLowerCase().trim()}:${artist.toLowerCase().trim()}`;
                 const chartRun = appState.chartRunData[chartType]?.[chartRunKey] || [];
-                const currentEntry = chartRun.find(entry => entry.date === appState.currentDate);
 
                 // Lógica para marcadores
                 let newPeakBadge = '';
-                if (currentEntry && currentEntry.peak === currentEntry.position && currentEntry.weeks > 1) {
+                if (peak && position === peak && weeks > 1) {
                     newPeakBadge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">NEW PEAK</span>`;
                 }
 
                 let weeksAt1Badge = '';
-                if (position === 1 && weeksAt1 > 1) {
-                    weeksAt1Badge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">${weeksAt1} WEEKS AT #1</span>`;
+                if (weeksAt1 && weeksAt1 > 0) {
+                    weeksAt1Badge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">★ ${weeksAt1} WKS</span>`;
                 }
 
                 return `
@@ -1545,7 +1544,7 @@
                                     ${weeks ? `<span>WOC: ${weeks}</span>` : ''}
                                 </div>
                                 ` : ''}
-                                ${renderChartRun(chartRun, chartType)}
+                                ${renderChartRunLink(chartRun, chartType)}
                             </div>
                         </div>
                     </div>
@@ -1646,6 +1645,56 @@
                     ${barsHtml}
                 </div>
             `;
+        }
+        
+        function renderChartRunLink(chartRun, chartType) {
+            if (!chartRun || chartRun.length === 0) return '';
+            const key = `${chartRun[0].name.toLowerCase().trim()}:${chartRun[0].artist.toLowerCase().trim()}`;
+            return `
+                <div class="mt-2 text-xs font-semibold">
+                    <button class="text-accent hover:text-accent-dark transition-colors" onclick="showChartRunModal('${chartType}', '${key.replace(/'/g, "\\'")}')">
+                        View Chart Run <i class="fas fa-arrow-right text-xs ml-1"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        function showChartRunModal(chartType, itemKey) {
+            const chartRun = appState.chartRunData[chartType]?.[itemKey] || [];
+            const [name, artist] = itemKey.split(':');
+
+            if (chartRun.length === 0) {
+                modalContent.innerHTML = '<p class="text-center text-gray-500">No chart run data available.</p>';
+            } else {
+                const listItems = chartRun.map(run => {
+                    const isPeak = run.position === run.peak;
+                    const isNumberOne = run.position === 1;
+
+                    let highlightClass = '';
+                    if (isNumberOne) {
+                        highlightClass = 'text-accent font-bold';
+                    } else if (isPeak) {
+                        highlightClass = 'text-green-500 font-semibold';
+                    }
+                    
+                    return `
+                        <div class="flex justify-between items-center py-2 px-4 border-b border-gray-200">
+                            <span class="font-medium text-secondary">Week of ${run.date}</span>
+                            <span class="text-sm font-semibold ${highlightClass}">#${run.position}</span>
+                            ${isPeak && run.weeks > 1 ? `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">NEW PEAK</span>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                modalContent.innerHTML = `
+                    <h3 class="text-2xl font-bold mb-4">${name} by ${artist} - Chart Run</h3>
+                    <div class="bg-gray-100 rounded-lg overflow-hidden">
+                        ${listItems}
+                    </div>
+                `;
+            }
+
+            itemDetailsModal.classList.add('active');
         }
 
         function getDiffClass(diff) {
@@ -1880,7 +1929,7 @@
                                 <div class="blog-card bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                                     <div class="h-48 overflow-hidden">
                                         ${article.imageUrl ? `
-                                            <img src="${article.imageUrl}" alt="${article.artist}" class="w-full h-full object-cover article-image">
+                                            <img src="${article.imageUrl}" alt="${article.title}" class="w-full h-full object-cover article-image">
                                         ` : `
                                             <div class="w-full h-48 placeholder-art">
                                                 <i class="fas fa-newspaper text-3xl text-gray-400"></i>
@@ -1890,7 +1939,7 @@
                                     <div class="p-4">
                                         <span class="text-xs text-accent font-semibold">${article.publicationDate}</span>
                                         <h4 class="font-bold text-lg mt-1 mb-2 text-secondary truncate">${article.title}</h4>
-                                        <p class="text-gray-500 text-sm line-clamp-3">${article.fullText.substring(article.title.length, 150)}...</p>
+                                        <p class="text-gray-500 text-sm line-clamp-3">${article.fullText.substring(0, 150)}...</p>
                                         <button class="read-more-btn mt-3 text-accent text-sm font-semibold" data-article-index="${index}">
                                             Read More <i class="fas fa-arrow-right ml-1 text-xs"></i>
                                         </button>
@@ -1913,7 +1962,7 @@
                                     <div class="flex flex-col md:flex-row">
                                         <div class="md:w-1/4 mb-4 md:mb-0">
                                             ${article.imageUrl ? `
-                                                <img src="${article.imageUrl}" alt="${article.artist}" class="w-full h-32 object-cover rounded article-image">
+                                                <img src="${article.imageUrl}" alt="${article.title}" class="w-full h-32 object-cover rounded article-image">
                                             ` : `
                                                 <div class="w-full h-32 placeholder-art rounded">
                                                     <i class="fas fa-newspaper text-xl text-gray-400"></i>
@@ -1923,7 +1972,7 @@
                                         <div class="md:w-3/4 md:pl-6">
                                             <span class="text-xs text-accent font-semibold">${article.publicationDate}</span>
                                             <h4 class="font-bold text-lg mt-1 mb-2 text-secondary">${article.title}</h4>
-                                            <p class="text-gray-500 text-sm">${article.fullText.substring(article.title.length, 200)}...</p>
+                                            <p class="text-gray-500 text-sm">${article.fullText.substring(0, 200)}...</p>
                                             <button class="read-more-btn mt-3 text-accent text-sm font-semibold" data-article-index="${index}">
                                                 Read More <i class="fas fa-arrow-right ml-1 text-xs"></i>
                                             </button>
@@ -1954,7 +2003,7 @@
                 <div class="max-h-screen overflow-y-auto">
                     <div class="mb-6">
                         ${article.imageUrl ? `
-                            <img src="${article.imageUrl}" alt="${article.artist}" class="w-full h-64 object-cover rounded-lg mb-4">
+                            <img src="${article.imageUrl}" alt="${article.title}" class="w-full h-64 object-cover rounded-lg mb-4">
                         ` : `
                             <div class="w-full h-64 placeholder-art rounded-lg mb-4 flex items-center justify-center">
                                 <i class="fas fa-newspaper text-4xl text-gray-400"></i>
