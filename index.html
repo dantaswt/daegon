@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>daegon charts</title>
+    <link rel="icon" type="image/png" href="https://i.imgur.com/tbLeosRP.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -540,7 +539,7 @@
                     date: ['date', 'data'],
                     title: ['title', 'título'], // Nova coluna
                     text: ['text', 'conteúdo'],
-                    image: ['image', 'imagem']
+                    artist: ['artist', 'artista'],
                 }
             },
             top100Albums: {
@@ -551,7 +550,7 @@
                     date: ['date', 'data'],
                     title: ['title', 'título'], // Nova coluna
                     text: ['text', 'conteúdo'],
-                    image: ['image', 'imagem']
+                    artist: ['artist', 'artista'],
                 }
             }
         };
@@ -1062,20 +1061,21 @@
                         };
 
                         const dateIndex = findIndex(config.colMap.date);
-                        const titleIndex = findIndex(config.colMap.title); // Usar nova coluna 'Title'
-                        const imageIndex = findIndex(config.colMap.image);
+                        const titleIndex = findIndex(config.colMap.title);
                         const textIndex = findIndex(config.colMap.text);
-
+                        const artistIndex = findIndex(config.colMap.artist);
+                        
                         const publicationDate = row[dateIndex] || 'NO DATE';
                         const title = row[titleIndex] || 'NO TITLE';
-                        const imageUrl = row[imageIndex] || null;
                         const fullText = row[textIndex] || 'No content available.';
+                        const artist = row[artistIndex] || null; // Ler a nova coluna 'Artist'
                         
                         return {
                             title,
                             publicationDate,
-                            imageUrl,
-                            fullText
+                            artist,
+                            fullText,
+                            imageUrl: null // Inicializa a URL da imagem como nula, será preenchida
                         };
                     });
                     
@@ -1084,6 +1084,20 @@
                 } catch (error) {
                     console.error(`Error processing ${key} blog data:`, error);
                     appState.chartBeatData[key] = [];
+                }
+            }
+            
+            // Carregar imagens para os artigos a partir do artista
+            await loadBlogImages();
+        }
+
+        async function loadBlogImages() {
+            for (const [key, articles] of Object.entries(appState.chartBeatData)) {
+                for (let article of articles) {
+                    if (article.artist) {
+                        const imageUrl = await getSpotifyImage(article.artist, 'artist');
+                        article.imageUrl = imageUrl;
+                    }
                 }
             }
         }
@@ -1120,7 +1134,7 @@
                                 <div class="blog-card bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm cursor-pointer" onclick="showChartBeatPage()">
                                     <div class="h-48 overflow-hidden relative">
                                         ${featuredHot100.imageUrl ? `
-                                            <img src="${featuredHot100.imageUrl}" alt="${featuredHot100.title}" class="w-full h-full object-cover article-image">
+                                            <img src="${featuredHot100.imageUrl}" alt="${featuredHot100.artist}" class="w-full h-full object-cover article-image">
                                         ` : `
                                             <div class="w-full h-48 placeholder-art">
                                                 <i class="fas fa-newspaper text-3xl text-gray-400"></i>
@@ -1138,7 +1152,7 @@
                                 <div class="blog-card bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm cursor-pointer" onclick="showChartBeatPage()">
                                     <div class="h-48 overflow-hidden relative">
                                         ${featuredTop100.imageUrl ? `
-                                            <img src="${featuredTop100.imageUrl}" alt="${featuredTop100.title}" class="w-full h-full object-cover article-image">
+                                            <img src="${featuredTop100.imageUrl}" alt="${featuredTop100.artist}" class="w-full h-full object-cover article-image">
                                         ` : `
                                             <div class="w-full h-48 placeholder-art">
                                                 <i class="fas fa-newspaper text-3xl text-gray-400"></i>
@@ -1471,11 +1485,13 @@
                 return '<div class="text-center p-8 text-gray-500">No data available</div>';
             }
             
+            const isYearEnd = chartType.includes('yearEnd');
+
             return displayItems.map((row, index) => {
                 const position = parseInt(row[colMap.position]) || 0;
                 const artist = row[colMap.artist] || 'Unknown';
                 const diff = colMap.diff !== -1 ? row[colMap.diff] : null;
-                const lastWeek = colMap.lastWeek !== -1 && !chartType.includes('yearEnd') ? row[colMap.lastWeek] : null;
+                const lastWeek = colMap.lastWeek !== -1 && !isYearEnd ? row[colMap.lastWeek] : null;
                 const peak = colMap.peak !== -1 ? parseInt(row[colMap.peak]) : null;
                 const weeks = colMap.weeks !== -1 ? row[colMap.weeks] : null;
                 const weeksAt1 = colMap.weeksAt1 !== -1 ? parseInt(row[colMap.weeksAt1]) : null;
@@ -1497,21 +1513,24 @@
 
                 // Lógica para marcadores
                 let newPeakBadge = '';
-                if (peak && position === peak && weeks > 1) {
-                    newPeakBadge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">NEW PEAK</span>`;
-                }
-
                 let weeksAt1Badge = '';
-                if (weeksAt1 && weeksAt1 > 0) {
-                    weeksAt1Badge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">★ ${weeksAt1} WKS</span>`;
+                if (!isYearEnd) {
+                    const currentEntry = chartRun.find(entry => entry.date === appState.currentDate);
+                    if (currentEntry && currentEntry.peak === currentEntry.position && currentEntry.weeks > 1) {
+                        newPeakBadge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">NEW PEAK</span>`;
+                    }
+    
+                    if (weeksAt1 && weeksAt1 > 0) {
+                        weeksAt1Badge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">★ ${weeksAt1} WKS</span>`;
+                    }
                 }
-
+                
                 return `
                     <div class="chart-row py-4 px-4 ${position === 1 ? 'rank-1' : ''}">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 w-10 text-center relative text-secondary">
                                 <span class="text-xl font-bold">${position}</span>
-                                ${diffSymbol ? `<span class="diff-indicator ml-1 text-xs font-semibold ${diffClass}">${diffSymbol}</span>` : ''}
+                                ${!isYearEnd && diffSymbol ? `<span class="diff-indicator ml-1 text-xs font-semibold ${diffClass}">${diffSymbol}</span>` : ''}
                                 ${hasAward ? '<div class="award-badge">★</div>' : ''}
                             </div>
                             <div class="flex-shrink-0 mx-4">
@@ -1537,7 +1556,7 @@
                                         ${renderUnitsInfo(units, totalUnits, certification, weeksAt1, chartType)}
                                     </div>
                                 </div>
-                                ${!chartType.includes('yearEnd') ? `
+                                ${!isYearEnd ? `
                                 <div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
                                     <span>LW: ${lastWeek === '0' || lastWeek?.toLowerCase() === 're' ? '-' : lastWeek}</span>
                                     ${peak ? `<span>PK: ${peak}</span>` : ''}
@@ -1608,48 +1627,15 @@
                 </div>
             `;
         }
-
-        function renderChartRun(chartRun, chartType) {
-            if (!chartRun || chartRun.length === 0) return '';
-            
-            const maxBars = 12; // Máximo de barras visíveis
-            const startIndex = Math.max(0, chartRun.length - maxBars);
-            const visibleRun = chartRun.slice(startIndex);
-
-            const barsHtml = visibleRun.map(entry => {
-                const active = entry.date === appState.currentDate;
-                const position = entry.position;
-                const isPeak = position === entry.peak;
-                const isNumberOne = position === 1;
-
-                let barColorClass = 'bg-gray-300';
-                if (isNumberOne) {
-                    barColorClass = 'bg-yellow-400';
-                } else if (isPeak) {
-                    barColorClass = 'bg-green-500';
-                }
-
-                // Ajuste para altura da barra
-                const heightPercentage = (1 - (position / 100)) * 100;
-                const heightStyle = `height: ${heightPercentage}%;`;
-
-                return `
-                    <div class="chart-run-bar relative flex-grow h-full rounded-full overflow-hidden cursor-pointer ${active ? 'ring-2 ring-offset-1 ring-accent' : ''}" data-date="${entry.date}" data-chart="${chartType}" title="${entry.position} - ${entry.date}">
-                        <div class="h-full w-full ${barColorClass}" style="${heightStyle}"></div>
-                    </div>
-                `;
-            }).join('');
-
-            return `
-                <div class="chart-run-container flex items-end h-16 w-full mt-4 p-2 bg-gray-100 rounded-lg shadow-inner gap-1">
-                    ${barsHtml}
-                </div>
-            `;
-        }
         
         function renderChartRunLink(chartRun, chartType) {
-            if (!chartRun || chartRun.length === 0) return '';
-            const key = `${chartRun[0].name.toLowerCase().trim()}:${chartRun[0].artist.toLowerCase().trim()}`;
+            if (!chartRun || chartRun.length === 0 || chartType.includes('yearEnd')) return '';
+            
+            const firstEntry = chartRun[0];
+            const name = firstEntry.name || 'Unknown';
+            const artist = firstEntry.artist || 'Unknown';
+            const key = `${name.toLowerCase().trim()}:${artist.toLowerCase().trim()}`;
+
             return `
                 <div class="mt-2 text-xs font-semibold">
                     <button class="text-accent hover:text-accent-dark transition-colors" onclick="showChartRunModal('${chartType}', '${key.replace(/'/g, "\\'")}')">
@@ -1929,7 +1915,7 @@
                                 <div class="blog-card bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                                     <div class="h-48 overflow-hidden">
                                         ${article.imageUrl ? `
-                                            <img src="${article.imageUrl}" alt="${article.title}" class="w-full h-full object-cover article-image">
+                                            <img src="${article.imageUrl}" alt="${article.artist}" class="w-full h-full object-cover article-image">
                                         ` : `
                                             <div class="w-full h-48 placeholder-art">
                                                 <i class="fas fa-newspaper text-3xl text-gray-400"></i>
@@ -1962,7 +1948,7 @@
                                     <div class="flex flex-col md:flex-row">
                                         <div class="md:w-1/4 mb-4 md:mb-0">
                                             ${article.imageUrl ? `
-                                                <img src="${article.imageUrl}" alt="${article.title}" class="w-full h-32 object-cover rounded article-image">
+                                                <img src="${article.imageUrl}" alt="${article.artist}" class="w-full h-32 object-cover rounded article-image">
                                             ` : `
                                                 <div class="w-full h-32 placeholder-art rounded">
                                                     <i class="fas fa-newspaper text-xl text-gray-400"></i>
