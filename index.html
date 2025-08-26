@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -540,6 +542,7 @@
                     title: ['title', 'título'], // Nova coluna
                     text: ['text', 'conteúdo'],
                     artist: ['artist', 'artista'],
+                    chartLink: ['chartlink']
                 }
             },
             top100Albums: {
@@ -551,6 +554,7 @@
                     title: ['title', 'título'], // Nova coluna
                     text: ['text', 'conteúdo'],
                     artist: ['artist', 'artista'],
+                    chartLink: ['chartlink']
                 }
             }
         };
@@ -1064,18 +1068,21 @@
                         const titleIndex = findIndex(config.colMap.title);
                         const textIndex = findIndex(config.colMap.text);
                         const artistIndex = findIndex(config.colMap.artist);
+                        const chartLinkIndex = findIndex(config.colMap.chartLink);
                         
                         const publicationDate = row[dateIndex] || 'NO DATE';
                         const title = row[titleIndex] || 'NO TITLE';
                         const fullText = row[textIndex] || 'No content available.';
-                        const artist = row[artistIndex] || null; // Ler a nova coluna 'Artist'
+                        const artist = row[artistIndex] || null;
+                        const chartLink = row[chartLinkIndex] || null;
                         
                         return {
                             title,
                             publicationDate,
                             artist,
                             fullText,
-                            imageUrl: null // Inicializa a URL da imagem como nula, será preenchida
+                            chartLink,
+                            imageUrl: null
                         };
                     });
                     
@@ -1419,6 +1426,14 @@
                             if (dateStr) {
                                 appState.currentDate = dateStr;
                                 appState.sharedDate = dateStr; // Atualizar data compartilhada
+                                
+                                // Sincronizar com outros gráficos semanais
+                                for(const chartKey of ['songs', 'artists', 'albums']) {
+                                    if(chartKey !== chartType && appState.chartData[chartKey][dateStr]) {
+                                        appState.chartData[chartKey].activeDate = dateStr;
+                                    }
+                                }
+
                                 document.getElementById('chartContainer').innerHTML = renderChartItems();
                                 updateWeekNavButtons();
                                 loadSpotifyImages();
@@ -1460,7 +1475,9 @@
             
             let items = [];
             
-            if (chartType.includes('yearEnd')) {
+            const isYearEnd = chartType.includes('yearEnd');
+
+            if (isYearEnd) {
                 const yearsData = appState.chartData[chartType];
                 if (!yearsData) return '<div class="text-center p-8 text-gray-500">No data available</div>';
                 
@@ -1479,14 +1496,12 @@
                 return parseInt(a[colMap.position]) - parseInt(b[colMap.position]);
             });
             
-            const displayItems = chartType.includes('yearEnd') ? sortedItems.slice(0, 100) : sortedItems.slice(0, 100);
+            const displayItems = isYearEnd ? sortedItems.slice(0, 100) : sortedItems.slice(0, 100);
             
             if (displayItems.length === 0) {
                 return '<div class="text-center p-8 text-gray-500">No data available</div>';
             }
             
-            const isYearEnd = chartType.includes('yearEnd');
-
             return displayItems.map((row, index) => {
                 const position = parseInt(row[colMap.position]) || 0;
                 const artist = row[colMap.artist] || 'Unknown';
@@ -1511,7 +1526,7 @@
                 const chartRunKey = `${name.toLowerCase().trim()}:${artist.toLowerCase().trim()}`;
                 const chartRun = appState.chartRunData[chartType]?.[chartRunKey] || [];
 
-                // Lógica para marcadores
+                // Lógica para marcadores (apenas em weekly charts)
                 let newPeakBadge = '';
                 let weeksAt1Badge = '';
                 if (!isYearEnd) {
@@ -1520,8 +1535,8 @@
                         newPeakBadge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">NEW PEAK</span>`;
                     }
     
-                    if (weeksAt1 && weeksAt1 > 0) {
-                        weeksAt1Badge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">★ ${weeksAt1} WKS</span>`;
+                    if (weeksAt1 && weeksAt1 > 1) { // Só mostra se for mais de uma semana
+                        weeksAt1Badge = `<span class="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-2">${weeksAt1} WKS AT #1</span>`;
                     }
                 }
                 
@@ -1531,7 +1546,7 @@
                             <div class="flex-shrink-0 w-10 text-center relative text-secondary">
                                 <span class="text-xl font-bold">${position}</span>
                                 ${!isYearEnd && diffSymbol ? `<span class="diff-indicator ml-1 text-xs font-semibold ${diffClass}">${diffSymbol}</span>` : ''}
-                                ${hasAward ? '<div class="award-badge">★</div>' : ''}
+                                ${hasAward && !isYearEnd ? '<div class="award-badge">★</div>' : ''}
                             </div>
                             <div class="flex-shrink-0 mx-4">
                                 <div class="w-12 h-12 rounded-md shadow-md overflow-hidden spotify-image" id="image-${chartType}-${index}">
@@ -1563,7 +1578,7 @@
                                     ${weeks ? `<span>WOC: ${weeks}</span>` : ''}
                                 </div>
                                 ` : ''}
-                                ${renderChartRunLink(chartRun, chartType)}
+                                ${renderChartRunLink(chartRun, chartType, name, artist)}
                             </div>
                         </div>
                     </div>
@@ -1598,44 +1613,10 @@
             
             return html ? `<div class="mt-1">${html}</div>` : '';
         }
-
-        function renderMiniChartRun(chartRun, chartType) {
-            if (!chartRun || chartRun.length === 0) return '';
-            
-            const maxPos = chartType === 'songs' ? 100 : chartType === 'artists' ? 50 : 50;
-            const normalizedPositions = chartRun.map(run => {
-                let position = run.position;
-                if (position === 0 || isNaN(position)) position = maxPos + 1;
-                return (1 - ((position - 1) / maxPos)) * 100;
-            });
-            
-            const totalBars = 30;
-            const barWidth = 100 / totalBars;
-            
-            const barsHtml = Array.from({ length: totalBars }).map((_, i) => {
-                const pos = normalizedPositions[Math.floor((i / totalBars) * normalizedPositions.length)];
-                const barHeight = pos || 0;
-                
-                return `
-                    <div class="chart-run-bar-mini" style="height: ${barHeight}%; flex-grow: 1;"></div>
-                `;
-            }).join('');
-            
-            return `
-                <div class="chart-run-mini items-end" style="height: 15px; background: rgba(0, 206, 209, 0.1); border-radius: 4px; padding: 2px;">
-                    ${barsHtml}
-                </div>
-            `;
-        }
         
-        function renderChartRunLink(chartRun, chartType) {
+        function renderChartRunLink(chartRun, chartType, name, artist) {
             if (!chartRun || chartRun.length === 0 || chartType.includes('yearEnd')) return '';
-            
-            const firstEntry = chartRun[0];
-            const name = firstEntry.name || 'Unknown';
-            const artist = firstEntry.artist || 'Unknown';
             const key = `${name.toLowerCase().trim()}:${artist.toLowerCase().trim()}`;
-
             return `
                 <div class="mt-2 text-xs font-semibold">
                     <button class="text-accent hover:text-accent-dark transition-colors" onclick="showChartRunModal('${chartType}', '${key.replace(/'/g, "\\'")}')">
@@ -1985,11 +1966,20 @@
             
             if (!article) return;
             
+            // Adicionar botão do link no final do artigo
+            const chartLinkHtml = article.chartLink ? `
+                <div class="mt-8 text-center">
+                    <button class="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-dark transition-colors" onclick="showChartPage('${article.chartLink}')">
+                        See the full chart here <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            ` : '';
+            
             modalContent.innerHTML = `
                 <div class="max-h-screen overflow-y-auto">
                     <div class="mb-6">
                         ${article.imageUrl ? `
-                            <img src="${article.imageUrl}" alt="${article.title}" class="w-full h-64 object-cover rounded-lg mb-4">
+                            <img src="${article.imageUrl}" alt="${article.artist}" class="w-full h-64 object-cover rounded-lg mb-4">
                         ` : `
                             <div class="w-full h-64 placeholder-art rounded-lg mb-4 flex items-center justify-center">
                                 <i class="fas fa-newspaper text-4xl text-gray-400"></i>
@@ -2000,6 +1990,7 @@
                         <div class="prose max-w-none">
                             <p class="text-gray-700 whitespace-pre-line">${article.fullText}</p>
                         </div>
+                        ${chartLinkHtml}
                     </div>
                 </div>
             `;
@@ -2302,14 +2293,9 @@
             appState.currentView = 'allArtists';
             
             // Salvar estado atual antes de navegar
-            if (appState.currentView === 'chart' && appState.activeChart) {
-                appState.navigationHistory.push({
-                    view: 'chart',
-                    chart: appState.activeChart,
-                    date: appState.currentDate,
-                    year: appState.currentYear
-                });
-            }
+            appState.navigationHistory.push({
+                view: 'allEntries'
+            });
             
             appContainer.innerHTML = `
                 <div class="max-w-6xl mx-auto">
@@ -2331,7 +2317,7 @@
             `;
             
             document.getElementById('backButton').addEventListener('click', function() {
-                showAllEntriesPage();
+                navigateBack();
             });
             
             // Add search functionality
@@ -2417,7 +2403,6 @@
                     console.error('Some charts failed to load:', failedCharts);
                 }
                 
-                calculateArtistStats();
                 renderHomePage();
                 
             } catch (error) {
