@@ -886,6 +886,9 @@
                     year: findIndex(['year', 'ano']),
                     chart: findIndex(['chart']),
                     item: findIndex(['item']),
+                    // Novas colunas para o marcador NEW PEAK
+                    newPeak: findIndex(['new peak']),
+                    peakStatus: findIndex(['peak status'])
                 };
                 
                 if (chartType === 'artistStats') {
@@ -1188,7 +1191,7 @@
                         const fullText = row[textIndex] || 'No content available.';
                         const artist = row[artistIndex] || null;
                         const chartLink = row[chartLinkIndex] || null;
-                        const tags = row[tagsIndex] ? row[tagsIndex].split(',').map(tag => tag.trim().toLowerCase()) : [];
+                        const tags = tagsIndex !== -1 && row[tagsIndex] ? row[tagsIndex].split(',').map(tag => tag.trim().toLowerCase()) : [];
                         
                         return {
                             title,
@@ -1636,19 +1639,21 @@
                 
                 const diffClass = getDiffClass(diff);
                 const diffSymbol = getDiffSymbol(diff);
+
+                // Lógica para os novos marcadores
+                let newPeakBadge = '';
+                const peakStatus = colMap.peakStatus !== -1 ? row[colMap.peakStatus] : '';
+                if (peakStatus === 'NEW PEAK') {
+                    newPeakBadge = `<span class="badge badge-new-peak">NEW PEAK</span>`;
+                }
+                
+                let weeksAt1Badge = '';
+                if (weeksAt1 && weeksAt1 > 1) {
+                    weeksAt1Badge = `<span class="badge badge-weeks-at-1">${weeksAt1} WKS AT #1</span>`;
+                }
                 
                 const chartRunKey = `${name.toLowerCase().trim()}:${artist.toLowerCase().trim()}`;
                 const chartRun = appState.chartRunData[chartType]?.[chartRunKey] || [];
-
-                let newPeakBadge = '';
-                if (!isYearEnd && !isGoat && peak && position < peak) {
-                    newPeakBadge = `<span class="badge badge-new-peak">NEW PEAK</span>`;
-                }
-
-                let weeksAt1Badge = '';
-                if (!isYearEnd && !isGoat && weeksAt1 && weeksAt1 > 1) {
-                    weeksAt1Badge = `<span class="badge badge-weeks-at-1">${weeksAt1} WKS AT #1</span>`;
-                }
 
                 return `
                     <div class="chart-row py-4 px-4 ${position === 1 ? (isGoat ? 'rank-1 goat' : 'rank-1') : ''}">
@@ -2038,9 +2043,9 @@
                                         <div class="md:w-3/4 md:pl-6">
                                             <span class="text-xs text-accent font-semibold">${article.publicationDate}</span>
                                             <h4 class="font-bold text-lg mt-1 mb-2 text-secondary">${article.title}</h4>
-                                            <p class="text-gray-500 text-sm">${article.fullText.substring(0, 200)}...</p>
+                                            <p class="text-gray-500 text-sm line-clamp-3">${article.fullText.substring(0, 200)}...</p>
                                             <div class="mt-2 flex flex-wrap gap-2">
-                                                ${article.tags.map(tag => `<span class="tag-pill text-xs">#${tag}</span>`).join('')}
+                                                ${article.tags.map(tag => `<button class="tag-pill text-xs tag-filter" data-tag="${tag}">#${tag}</button>`).join('')}
                                             </div>
                                             <button class="read-more-btn mt-3 text-accent text-sm font-semibold" data-article-index="${index}">
                                                 Read More <i class="fas fa-arrow-right ml-1 text-xs"></i>
@@ -2108,6 +2113,7 @@
                 btn.addEventListener('click', function() {
                     const blogType = this.dataset.blog;
                     appState.currentBlog = blogType;
+                    appState.activeTags[blogType] = null;
                     renderChartBeatPage();
                 });
             });
