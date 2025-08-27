@@ -621,7 +621,8 @@
                     title: ['title', 'título'],
                     text: ['text', 'conteúdo'],
                     artist: ['artist', 'artista'],
-                    chartLink: ['chartlink']
+                    chartLink: ['chartlink'],
+                    tags: ['tags']
                 }
             },
             top100Albums: {
@@ -633,7 +634,8 @@
                     title: ['title', 'título'],
                     text: ['text', 'conteúdo'],
                     artist: ['artist', 'artista'],
-                    chartLink: ['chartlink']
+                    chartLink: ['chartlink'],
+                    tags: ['tags']
                 }
             }
         };
@@ -734,7 +736,7 @@
             }
         }
 
-        async function getSpotifyImage(query, type, artist = null, album = null, song = null) {
+        async function getSpotifyImage(query, type) {
             const cacheKey = `${type}:${query}`;
             if (imageCache[`spotify:${cacheKey}`]) {
                 return imageCache[`spotify:${cacheKey}`];
@@ -742,20 +744,11 @@
             
             const token = await getSpotifyAccessToken();
             if (!token) return null;
-
-            let fullQuery = query;
-            if (type === 'album' && artist) {
-                fullQuery = `${artist} ${album || query}`;
-            } else if (type === 'song' && artist) {
-                fullQuery = `${artist} ${song || query}`;
-            } else if (type === 'artist' && artist) {
-                fullQuery = artist;
-            }
             
             try {
                 const searchType = type === 'artist' ? 'artist' : 'album';
                 const response = await fetch(
-                    `https://api.spotify.com/v1/search?q=${encodeURIComponent(fullQuery)}&type=${searchType}&limit=1`,
+                    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${searchType}&limit=1`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -1637,12 +1630,14 @@
                 const diffClass = getDiffClass(diff);
                 const diffSymbol = getDiffSymbol(diff);
 
-                // Lógica original para o marcador NEW PEAK
+                // Reativada a lógica original para o marcador NEW PEAK
                 let newPeakBadge = '';
-                const hasNewPeak = (peak && position < peak);
-                const isNewEntry = (diff?.toLowerCase() === 'new' || diff?.toLowerCase() === 're' || lastWeek?.toString() === '0');
-                if (hasNewPeak && !isNewEntry) {
-                    newPeakBadge = `<span class="badge badge-new-peak">NEW PEAK</span>`;
+                if (!isYearEnd && !isGoat) {
+                    const hasNewPeak = (peak && position < peak);
+                    const isNewEntry = (diff?.toLowerCase() === 'new' || diff?.toLowerCase() === 're' || lastWeek?.toString() === '0');
+                    if (hasNewPeak && !isNewEntry) {
+                        newPeakBadge = `<span class="badge badge-new-peak">NEW PEAK</span>`;
+                    }
                 }
                 
                 let weeksAt1Badge = '';
@@ -1843,8 +1838,7 @@
                 
                 if (query && query !== 'Unknown') {
                     try {
-                         // Passa os dados de artista e item separadamente para a busca refinada
-                        const imageUrl = await getSpotifyImage(query, type, artist, album, song);
+                        const imageUrl = await getSpotifyImage(query, type);
                         const imageElement = document.getElementById(`image-${chartType}-${i}`);
                         
                         if (imageElement && imageUrl) {
