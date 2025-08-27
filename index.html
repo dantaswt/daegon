@@ -475,6 +475,24 @@
         .rank-1.goat .diff-indicator {
             color: var(--gold) !important;
         }
+        .tag-pill {
+            display: inline-block;
+            background-color: rgba(0, 206, 209, 0.1);
+            color: var(--accent);
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tag-pill:hover {
+            background-color: var(--accent);
+            color: var(--secondary);
+        }
+        .tag-pill.active {
+            background-color: var(--accent);
+            color: var(--secondary);
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -603,7 +621,8 @@
                     title: ['title', 'título'],
                     text: ['text', 'conteúdo'],
                     artist: ['artist', 'artista'],
-                    chartLink: ['chartlink']
+                    chartLink: ['chartlink'],
+                    tags: ['tags']
                 }
             },
             top100Albums: {
@@ -615,7 +634,8 @@
                     title: ['title', 'título'],
                     text: ['text', 'conteúdo'],
                     artist: ['artist', 'artista'],
-                    chartLink: ['chartlink']
+                    chartLink: ['chartlink'],
+                    tags: ['tags']
                 }
             }
         };
@@ -680,7 +700,11 @@
             },
             currentBlog: 'hot100',
             sharedDate: null,
-            artistDetailsData: {}
+            artistDetailsData: {},
+            activeTags: {
+                hot100: null,
+                top100Albums: null
+            }
         };
 
         // --- DOM ELEMENTS ---
@@ -1157,12 +1181,14 @@
                         const textIndex = findIndex(config.colMap.text);
                         const artistIndex = findIndex(config.colMap.artist);
                         const chartLinkIndex = findIndex(config.colMap.chartLink);
+                        const tagsIndex = findIndex(config.colMap.tags);
                         
                         const publicationDate = row[dateIndex] || 'NO DATE';
                         const title = row[titleIndex] || 'NO TITLE';
                         const fullText = row[textIndex] || 'No content available.';
                         const artist = row[artistIndex] || null;
                         const chartLink = row[chartLinkIndex] || null;
+                        const tags = row[tagsIndex] ? row[tagsIndex].split(',').map(tag => tag.trim().toLowerCase()) : [];
                         
                         return {
                             title,
@@ -1170,6 +1196,7 @@
                             artist,
                             fullText,
                             chartLink,
+                            tags,
                             imageUrl: null
                         };
                     });
@@ -1393,7 +1420,7 @@
             }
         }
 
-        function showChartPage(chartType) {
+        function showChartPage(chartType, dateToSet = null) {
             if (appState.currentView === 'chart' && appState.activeChart) {
                 appState.navigationHistory.push({
                     view: 'chart',
@@ -1417,7 +1444,9 @@
             } else {
                 const dates = Object.keys(appState.chartData[chartType]);
                 const mostRecentDate = dates.length > 0 ? dates[dates.length - 1] : null;
-                appState.currentDate = appState.sharedDate || mostRecentDate;
+                
+                appState.currentDate = dateToSet || appState.sharedDate || mostRecentDate;
+                
                 if (!appState.chartData[chartType][appState.currentDate] && !isGoat) {
                     appState.currentDate = mostRecentDate;
                     appState.sharedDate = mostRecentDate;
@@ -1943,11 +1972,22 @@
         }
 
         // --- FUNÇÕES DE RENDERIZAÇÃO DO CHART BEAT ---
-        function renderChartBeatPage() {
+        function renderChartBeatPage(tag = null) {
             appState.currentView = 'chartBeat';
+            appState.activeTags[appState.currentBlog] = tag;
+
+            const allArticles = appState.chartBeatData[appState.currentBlog] || [];
             
-            const articles = appState.chartBeatData[appState.currentBlog] || [];
-            const featuredArticles = articles.slice(0, 3);
+            let articles = allArticles;
+            if (tag) {
+                articles = allArticles.filter(article => article.tags.includes(tag));
+            }
+
+            const uniqueTags = new Set();
+            allArticles.forEach(article => {
+                article.tags.forEach(t => uniqueTags.add(t));
+            });
+            const sortedTags = [...uniqueTags].sort();
             
             appContainer.innerHTML = `
                 <div class="max-w-6xl mx-auto">
@@ -1968,42 +2008,21 @@
                             Top 100 Albums
                         </button>
                     </div>
-                    
-                    <div class="mb-12">
-                        <h3 class="text-xl font-bold mb-6 section-title">Featured Articles</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            ${featuredArticles.length > 0 ? featuredArticles.map((article, index) => `
-                                <div class="blog-card bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                                    <div class="h-48 overflow-hidden">
-                                        ${article.imageUrl ? `
-                                            <img src="${article.imageUrl}" alt="${article.artist}" class="w-full h-full object-cover article-image">
-                                        ` : `
-                                            <div class="w-full h-48 placeholder-art">
-                                                <i class="fas fa-newspaper text-3xl text-gray-400"></i>
-                                            </div>
-                                        `}
-                                    </div>
-                                    <div class="p-4">
-                                        <span class="text-xs text-accent font-semibold">${article.publicationDate}</span>
-                                        <h4 class="font-bold text-lg mt-1 mb-2 text-secondary truncate">${article.title}</h4>
-                                        <p class="text-gray-500 text-sm line-clamp-3">${article.fullText.substring(0, 150)}...</p>
-                                        <button class="read-more-btn mt-3 text-accent text-sm font-semibold" data-article-index="${index}">
-                                            Read More <i class="fas fa-arrow-right ml-1 text-xs"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            `).join('') : `
-                                <div class="col-span-3 text-center py-8 text-gray-500">
-                                    <i class="fas fa-newspaper text-4xl mb-3"></i>
-                                    <p>No articles available</p>
-                                </div>
-                            `}
+
+                    ${sortedTags.length > 0 ? `
+                        <div class="mb-8">
+                            <h3 class="text-xl font-bold mb-4 section-title">Popular Tags</h3>
+                            <div class="flex flex-wrap gap-2">
+                                ${sortedTags.map(t => `
+                                    <button class="tag-pill text-sm ${appState.activeTags[appState.currentBlog] === t ? 'active' : ''}" data-tag="${t}">#${t}</button>
+                                `).join('')}
+                            </div>
                         </div>
-                    </div>
+                    ` : ''}
                     
                     <div>
                         <h3 class="text-xl font-bold mb-6 section-title">All Articles</h3>
-                        <div class="space-y-6">
+                        <div id="articleList" class="space-y-6">
                             ${articles.length > 0 ? articles.map((article, index) => `
                                 <div class="blog-card bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
                                     <div class="flex flex-col md:flex-row">
@@ -2020,6 +2039,9 @@
                                             <span class="text-xs text-accent font-semibold">${article.publicationDate}</span>
                                             <h4 class="font-bold text-lg mt-1 mb-2 text-secondary">${article.title}</h4>
                                             <p class="text-gray-500 text-sm">${article.fullText.substring(0, 200)}...</p>
+                                            <div class="mt-2 flex flex-wrap gap-2">
+                                                ${article.tags.map(tag => `<span class="tag-pill text-xs">#${tag}</span>`).join('')}
+                                            </div>
                                             <button class="read-more-btn mt-3 text-accent text-sm font-semibold" data-article-index="${index}">
                                                 Read More <i class="fas fa-arrow-right ml-1 text-xs"></i>
                                             </button>
@@ -2048,7 +2070,7 @@
             
             const chartLinkHtml = article.chartLink ? `
                 <div class="mt-8 text-center">
-                    <button class="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-dark transition-colors" onclick="showChartPage('${article.chartLink}')">
+                    <button class="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-dark transition-colors" onclick="showChartPage('${article.chartLink}', '${article.publicationDate}')">
                         See the full chart here <i class="fas fa-arrow-right ml-2"></i>
                     </button>
                 </div>
@@ -2087,6 +2109,18 @@
                     const blogType = this.dataset.blog;
                     appState.currentBlog = blogType;
                     renderChartBeatPage();
+                });
+            });
+
+            document.querySelectorAll('.tag-pill').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tag = this.dataset.tag;
+                    const currentActiveTag = appState.activeTags[appState.currentBlog];
+                    if (currentActiveTag === tag) {
+                        renderChartBeatPage(null);
+                    } else {
+                        renderChartBeatPage(tag);
+                    }
                 });
             });
             
@@ -2487,7 +2521,6 @@
                     console.error('Some charts failed to load:', failedCharts);
                 }
                 
-                // Define o ano inicial para os Year-End Charts
                 const yearEndCharts = ['yearEndSongs', 'yearEndArtists', 'yearEndAlbums'];
                 for (const chartType of yearEndCharts) {
                     const years = Object.keys(appState.chartData[chartType]).sort((a, b) => b - a);
