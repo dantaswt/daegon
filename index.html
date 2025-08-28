@@ -1692,11 +1692,17 @@
                                     ${weeks ? `<span>WOC: ${weeks}</span>` : ''}
                                 </div>
                                 ` : ''}
-                                ${isGoat || isYearEnd ? `
+                                ${isGoat ? `
                                 <div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
-                                    ${isYearEnd ? `<span>Year: ${year}</span>` : ''}
                                     ${peak ? `<span>Peak: #${peak}</span>` : ''}
                                     ${weeks ? `<span>Weeks: ${weeks}</span>` : ''}
+                                </div>
+                                ` : ''}
+                                ${isYearEnd ? `
+                                <div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                                    ${peak ? `<span>Pico: #${peak}</span>` : ''}
+                                    ${weeks ? `<span>Semanas: ${weeks}</span>` : ''}
+                                    ${units ? `<span>Unidades: ${units}</span>` : ''}
                                 </div>
                                 ` : ''}
                                 ${renderChartRunLink(chartRun, chartType, name, artist)}
@@ -1891,7 +1897,7 @@
                         <div class="cursor-pointer bg-white border border-gray-200 rounded-lg p-4 transition-all duration-300 hover:border-accent shadow-sm" id="allAlbumsBtn">
                             <div class="flex items-center justify-between mb-3">
                                 <h4 class="font-semibold text-secondary">All Albums</h4>
-                                <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">${appState.allEntries.albums.length} entries</span>
+                                <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">${Object.keys(appState.albumDetailsData).length} entries</span>
                             </div>
                             <p class="text-sm text-gray-500">Browse all album entries from the Top Albums chart</p>
                         </div>
