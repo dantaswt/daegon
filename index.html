@@ -1,535 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>daegon charts</title>
-    <link rel="icon" type="image/png" href="https://i.imgur.com/tbLeosRP.jpg">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <style>
-        :root {
-            --primary: #F9FAFB;
-            --secondary: #111827;
-            --accent: #00CED1;
-            --accent-dark: #008B8B;
-            --gold: #FFD700;
-            --silver: #C0C0C0;
-            --bronze: #CD7F32;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--primary);
-            color: var(--secondary);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        .loader {
-            border: 4px solid rgba(17, 24, 39, 0.1);
-            border-top: 4px solid var(--accent);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .chart-nav-btn.active {
-            background-color: var(--accent);
-            color: var(--secondary);
-        }
-        .chart-nav-btn.goat-active {
-            background-color: var(--gold);
-            color: var(--secondary);
-        }
-        .chart-row {
-            transition: all 0.2s ease;
-            border-bottom: 1px solid rgba(17, 24, 39, 0.1);
-        }
-        .chart-row:hover {
-            background-color: rgba(0, 206, 209, 0.05);
-        }
-        .diff-up {
-            color: var(--accent);
-        }
-        .diff-down {
-            color: #FF6B6B;
-        }
-        .diff-new {
-            color: var(--accent);
-            font-weight: bold;
-        }
-        .placeholder-art {
-            background: linear-gradient(135deg, rgba(17, 24, 39, 0.1) 0%, rgba(17, 24, 39, 0.2) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .gradient-text {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .card-hover {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        .spotify-image {
-            transition: all 0.3s ease;
-        }
-        .spotify-image:hover {
-            transform: scale(1.05);
-        }
-        .rank-1 {
-            background: rgba(0, 206, 209, 0.1);
-            border-left: 5px solid var(--accent);
-            border-radius: 5px;
-            margin-left: -5px;
-            padding-left: 15px;
-            transition: all 0.3s ease;
-        }
-        .rank-1.goat {
-            background: rgba(255, 215, 0, 0.1);
-            border-left: 5px solid var(--gold);
-        }
-        .rank-1 .text-muted {
-            color: rgba(17, 24, 39, 0.7) !important;
-        }
-        .award {
-            position: relative;
-        }
-        .award-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: var(--gold);
-            color: #000;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .chart-run-mini {
-            display: flex;
-            height: 4px;
-            margin-top: 5px;
-            gap: 2px;
-        }
-        .chart-run-bar {
-            flex: 1;
-            background: rgba(17, 24, 39, 0.2);
-            border-radius: 2px;
-        }
-        .chart-run-bar.active {
-            background: var(--accent);
-        }
-        .artist-link {
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        .artist-link:hover {
-            color: var(--accent);
-        }
-        .section-title {
-            position: relative;
-            display: inline-block;
-            margin-bottom: 2rem;
-            color: var(--secondary);
-        }
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 50px;
-            height: 3px;
-            background: var(--accent);
-        }
-        .artist-page-link {
-            cursor: pointer;
-        }
-        .artist-page-link:hover {
-            color: var(--accent);
-        }
-        .chart-run-bar-mini {
-            height: 4px;
-            background: var(--accent);
-            border-radius: 2px;
-            transition: all 0.2s ease;
-        }
-        .stat-card {
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-        }
-        .stat-card:hover {
-            transform: translateY(-3px);
-            border-left-color: var(--accent);
-        }
-        .gold-badge {
-            background: linear-gradient(135deg, var(--gold) 0%, #FFC400 100%);
-            color: #000;
-        }
-        .silver-badge {
-            background: linear-gradient(135deg, var(--silver) 0%, #A8A8A8 100%);
-            color: #000;
-        }
-        .bronze-badge {
-            background: linear-gradient(135deg, var(--bronze) 0%, #B87333 100%);
-            color: #000;
-        }
-        .accent-badge {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
-            color: white;
-        }
-        .progress-bar {
-            height: 8px;
-            border-radius: 4px;
-            background: rgba(0, 206, 209, 0.2);
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: var(--accent);
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-        .artist-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .year-selector {
-            background: rgba(0, 206, 209, 0.1);
-            border-radius: 8px;
-            padding: 0.5rem;
-        }
-        .year-btn {
-            transition: all 0.2s ease;
-        }
-        .year-btn.active {
-            background: var(--accent);
-            color: white;
-        }
-        .top-card {
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-        .item-details-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        .item-details-modal.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            max-width: 90%;
-            max-height: 90%;
-            overflow-y: auto;
-            padding: 2rem;
-            position: relative;
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
-        }
-        .item-details-modal.active .modal-content {
-            transform: translateY(0);
-        }
-        .close-modal {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--secondary);
-        }
-        .bottom-nav {
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-        }
-        .search-container {
-            position: relative;
-            margin-bottom: 1rem;
-        }
-        .search-input {
-            width: 100%;
-            padding: 0.75rem 1rem 0.75rem 2.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-        }
-        .search-icon {
-            position: absolute;
-            left: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
-        }
-        .flatpickr-input {
-            background-color: #f3f4f6;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            padding: 0.5rem 0.75rem;
-            width: 150px;
-            text-align: center;
-        }
-        
-        /* Estilos para o Chart Beat */
-        .blog-card {
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-        }
-        .blog-card:hover {
-            transform: translateY(-3px);
-            border-left-color: var(--accent);
-        }
-        .article-image {
-            transition: transform 0.3s ease;
-        }
-        .article-image:hover {
-            transform: scale(1.05);
-        }
-        .chart-beat-nav-btn.active {
-            border-bottom: 2px solid var(--accent);
-            color: var(--accent);
-        }
-        .line-clamp-3 {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        
-        /* Calendário personalizado - REMOVIDO */
-        .calendar-container, .calendar-header, .calendar-grid, .calendar-cell {
-            display: none;
-        }
-        
-        /* Melhorias para botões e interatividade */
-        button {
-            touch-action: manipulation;
-            user-select: none;
-        }
-        
-        .btn-hover {
-            transition: all 0.2s ease;
-        }
-        
-        .btn-hover:active {
-            transform: scale(0.97);
-        }
-        
-        /* Melhorias de performance para imagens */
-        img {
-            content-visibility: auto;
-        }
-        
-        /* Melhorias para scroll suave */
-        html {
-            scroll-behavior: smooth;
-        }
-        
-        /* Animações para os top cards */
-        @keyframes slideInTopCards {
-            0% {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .top-card-animated {
-            animation: slideInTopCards 0.6s ease-out forwards;
-        }
-        
-        .top-card:nth-child(1) {
-            animation-delay: 0.1s;
-        }
-        
-        .top-card:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        
-        .top-card:nth-child(3) {
-            animation-delay: 0.3s;
-        }
-        
-        /* Estilo para ranking badges - REMOVIDO */
-        .ranking-badge {
-            display: none !important;
-        }
-        
-        .ranking-1 {
-            background: linear-gradient(135deg, var(--gold) 0%, #FFC400 100%);
-        }
-        
-        .ranking-2 {
-            background: linear-gradient(135deg, var(--silver) 0%, #A8A8A8 100%);
-        }
-        
-        .ranking-3 {
-            background: linear-gradient(135deg, var(--bronze) 0%, #B87333 100%);
-        }
-        
-        .section-title-artist {
-            position: relative;
-            padding-bottom: 10px;
-            margin-bottom: 2rem;
-            color: var(--secondary);
-        }
-        .section-title-artist::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 50px;
-            height: 3px;
-            background: var(--accent);
-        }
-        
-        /* Estilos para os novos marcadores */
-        .badge {
-            font-size: 0.75rem;
-            font-weight: bold;
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            margin-left: 0.5rem;
-            white-space: nowrap;
-        }
-        .badge-new-peak {
-            background-color: #fcd34d; /* Cor amarela */
-            color: #000;
-        }
-        .badge-weeks-at-1 {
-            background-color: #3b82f6; /* Cor azul */
-            color: #fff;
-        }
-        /* Novos estilos para GOAT */
-        .goat-title::after {
-            background: var(--gold);
-        }
-        .goat-card-border {
-            border: 1px solid var(--gold) !important;
-            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
-        }
-        .goat-nav-btn.active {
-            background-color: var(--gold) !important;
-            color: var(--secondary) !important;
-        }
-        .goat-text {
-            color: var(--gold);
-        }
-        .goat-highlight {
-            background: rgba(255, 215, 0, 0.1);
-            border-left: 5px solid var(--gold);
-            border-radius: 5px;
-            margin-left: -5px;
-            padding-left: 15px;
-        }
-        .rank-1.goat .diff-indicator {
-            color: var(--gold) !important;
-        }
-        .tag-pill {
-            display: inline-block;
-            background-color: rgba(0, 206, 209, 0.1);
-            color: var(--accent);
-            font-weight: 500;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .tag-pill:hover {
-            background-color: var(--accent);
-            color: var(--secondary);
-        }
-        .tag-pill.active {
-            background-color: var(--accent);
-            color: var(--secondary);
-        }
-    </style>
-</head>
-<body class="flex flex-col min-h-screen">
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl md:text-3xl font-extrabold">
-                <span class="gradient-text cursor-pointer" id="mainTitle">daegon charts</span>
-            </h1>
-            <nav class="flex space-x-4">
-                <button id="navAllEntries" class="text-sm font-semibold text-gray-700 hover:text-accent transition-colors">
-                    All Entries
-                </button>
-                <button id="navChartBeat" class="text-sm font-semibold text-gray-700 hover:text-accent transition-colors">
-                    Chart Beat
-                </button>
-            </nav>
-        </div>
-    </header>
-
-    <main id="app" class="flex-grow container mx-auto p-4 md:p-6">
-    </main>
-
-    <footer class="bg-white mt-8 py-6 border-t border-gray-200">
-        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
-            <p>Chart generated based on dantaswt's Last.fm data</p>
-            <p class="mt-2">Developed with <i class="fas fa-heart text-red-500"></i> using HTML, CSS & JavaScript</p>
-        </div>
-    </footer>
-
-    <div class="item-details-modal" id="itemDetailsModal">
-        <div class="modal-content w-full max-w-2xl">
-            <button class="close-modal" id="closeModal">×</button>
-            <div id="modalContent"></div>
-        </div>
-    </div>
-
-    <script>
+<script>
         // --- SPOTIFY CONFIGURATION ---
         const SPOTIFY_CLIENT_ID = '60d65b0ac9f14d6aa91c08a66894cea9';
         const SPOTIFY_CLIENT_SECRET = 'caf3f20ae798475e8dec65697f210c2a';
@@ -2620,10 +2089,36 @@
                 `;
             }).join('');
         }
+        
+        function cacheData(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {
+                console.error("Error saving data to localStorage:", e);
+            }
+        }
+
+        function getCachedData(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            } catch (e) {
+                console.error("Error retrieving data from localStorage:", e);
+                return null;
+            }
+        }
 
         async function initializeApp() {
             showMessage('loading', 'Loading charts data...');
             
+            const cachedData = getCachedData('chartsData');
+            
+            if (cachedData) {
+                appState = Object.assign(appState, cachedData);
+                renderHomePage();
+                showMessage('loading', 'Loading latest data in the background...');
+            }
+
             try {
                 const results = await Promise.allSettled([
                     fetchAndProcessChartData('songs'),
@@ -2647,7 +2142,8 @@
                 if (chartsConfig.songs.loaded) {
                     processAlbumStats();
                 }
-                
+
+                // Determina o ano mais recente após o carregamento de todos os dados
                 const yearEndCharts = ['yearEndSongs', 'yearEndArtists', 'yearEndAlbums'];
                 for (const chartType of yearEndCharts) {
                     const years = Object.keys(appState.chartData[chartType]).sort((a, b) => b - a);
@@ -2656,9 +2152,18 @@
                         break;
                     }
                 }
-
-                renderHomePage();
                 
+                // Salva todos os dados no cache
+                cacheData('chartsData', appState);
+
+                // Apenas renderiza a página se não houver dados em cache (para evitar renderização duplicada)
+                if (!cachedData) {
+                    renderHomePage();
+                } else {
+                    // Se houver dados em cache, força a atualização com os novos dados
+                    renderHomePage();
+                }
+
             } catch (error) {
                 showMessage('error', 'Error loading data: ' + error.message);
             }
@@ -2693,5 +2198,3 @@
             });
         });
     </script>
-</body>
-</html>
