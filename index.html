@@ -700,7 +700,8 @@
             },
             currentBlog: 'hot100',
             sharedDate: null,
-            artistDetailsData: {}
+            artistDetailsData: {},
+            albumDetailsData: {}
         };
 
         // --- DOM ELEMENTS ---
@@ -1672,7 +1673,13 @@
                                         </div>
                                         <p class="text-gray-500 text-sm truncate">
                                             ${!chartType.includes('Artists') && chartType !== 'artists' ? 
-                                                `<span class="artist-link" data-artist="${artist}">${artist}</span>` : 
+                                                `
+                                                <span class="artist-link" data-artist="${artist}">${artist}</span>
+                                                ${row[colMap.album] && chartType === 'songs' ? `
+                                                    <span class="text-gray-400 mx-1">•</span> 
+                                                    <span class="album-link text-accent hover:text-accent-dark transition-colors cursor-pointer" data-album="${row[colMap.album]}" data-artist="${artist}">${row[colMap.album]}</span>
+                                                ` : ''}
+                                                ` : 
                                                 `<span class="artist-page-link" data-artist="${artist}">View Artist Page</span>`}
                                         </p>
                                         ${renderUnitsInfo(units, totalUnits, certification, weeksAt1, chartType)}
@@ -1859,7 +1866,7 @@
             appContainer.innerHTML = `
                 <div class="max-w-6xl mx-auto">
                     <button id="backButton" class="back-button mb-6 flex items-center text-accent hover:text-accent-dark font-semibold transition-colors">
-                        <i class="fas fa-arrow-left mr-2"></i> Back to Home
+                        <i class="fas fa-arrow-left mr-2"></i> Back to All Entries
                     </button>
                     
                     <h2 class="text-3xl font-bold mb-6 section-title text-secondary">All Entries</h2>
@@ -2159,6 +2166,13 @@
                     } else {
                         renderHomePage();
                     }
+                } else if (previousState.view === 'album') {
+                    const lastNav = appState.navigationHistory?.[appState.navigationHistory.length - 1];
+                    if (lastNav && lastNav.view === 'chart') {
+                        showChartPage(lastNav.chart);
+                    } else {
+                        renderHomePage();
+                    }
                 } else if (previousState.view === 'allEntries') {
                     showAllEntriesPage();
                 } else if (previousState.view === 'chartBeat') {
@@ -2193,132 +2207,96 @@
             renderChartBeatPage();
         }
 
-        // --- FUNÇÃO calculateArtistStats REMOVIDA ---
-
-        // --- SETUP FUNCTIONS ---
-        function setupChartPageListeners() {
-            document.getElementById('backButton').addEventListener('click', navigateBack);
+        function processAlbumStats() {
+            appState.albumDetailsData = {};
             
-            document.querySelectorAll('.chart-nav-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const chartType = this.dataset.chart;
-                    showChartPage(chartType);
+            const songsData = appState.chartData.songs;
+            if (!songsData) {
+                console.error("No songs data available to process album stats.");
+                return;
+            }
+
+            const colMap = appState.colMaps.songs;
+            const dates = Object.keys(songsData).sort();
+
+            const albumAggregatedData = {};
+
+            dates.forEach(date => {
+                const weeklySongs = songsData[date];
+                weeklySongs.forEach(row => {
+                    const albumName = row[colMap.album];
+                    const artistName = row[colMap.artist];
+                    
+                    if (!albumName || !artistName) return;
+
+                    const albumKey = `${albumName.toLowerCase().trim()}:${artistName.toLowerCase().trim()}`;
+                    const songName = row[colMap.song];
+                    const songKey = `${songName.toLowerCase().trim()}:${albumKey}`;
+                    const position = parseInt(row[colMap.position]);
+                    const weeks = parseInt(row[colMap.weeks]);
+                    const units = row[colMap.units];
+                    const certification = row[colMap.certification];
+
+                    if (!albumAggregatedData[albumKey]) {
+                        albumAggregatedData[albumKey] = {
+                            album: albumName,
+                            artist: artistName,
+                            songs: {},
+                            chartRun: {},
+                            peak: Infinity,
+                            totalWeeks: 0,
+                            units: 0,
+                            certification: 'N/A'
+                        };
+                    }
+                    
+                    const albumData = albumAggregatedData[albumKey];
+                    
+                    // Atualiza o pico do álbum
+                    if (position < albumData.peak) {
+                        albumData.peak = position;
+                    }
+
+                    // Agrega as músicas do álbum
+                    if (!albumData.songs[songKey]) {
+                        albumData.songs[songKey] = {
+                            title: songName,
+                            peak: parseInt(row[colMap.peak]),
+                            weeks: weeks,
+                            units: units || 'N/A'
+                        };
+                    } else {
+                         // Apenas atualiza o número de semanas se for maior (caso a música volte ao chart)
+                        if (weeks > albumData.songs[songKey].weeks) {
+                            albumData.songs[songKey].weeks = weeks;
+                        }
+                    }
+
+                    // Adiciona o ponto ao chart-run do álbum
+                    if (!albumData.chartRun[date]) {
+                        albumData.chartRun[date] = { position: position, songsCount: 1 };
+                    } else {
+                        // Calcula a posição média ou simplesmente pega a posição mais alta da semana
+                        albumData.chartRun[date].position = Math.min(albumData.chartRun[date].position, position);
+                        albumData.chartRun[date].songsCount++;
+                    }
+
+                    // Adiciona semanas ao total do álbum
+                    albumData.totalWeeks = dates.filter(d => albumData.chartRun[d]).length;
+                    
+                    // Agrega unidades (se forem números)
+                    if (units && !isNaN(parseInt(units.replace(/,/g, '')))) {
+                        albumData.units += parseInt(units.replace(/,/g, ''));
+                    }
+
+                    // Agrega certificação (assume a mais alta se houver várias)
+                    if (certification && certification !== 'N/A') {
+                        albumData.certification = certification;
+                    }
                 });
             });
-            
-            const isYearEnd = appState.activeChart.includes('yearEnd');
-            const isGoat = appState.activeChart.includes('goat');
 
-            if (!isYearEnd && !isGoat) {
-                const dates = Object.keys(appState.chartData[appState.activeChart]).sort();
-                const currentIndex = dates.indexOf(appState.currentDate);
-
-                document.getElementById('prevWeekBtn').addEventListener('click', navigateToPrevWeek);
-                document.getElementById('nextWeekBtn').addEventListener('click', navigateToNextWeek);
-                document.getElementById('bottomPrevWeekBtn').addEventListener('click', navigateToPrevWeek);
-                document.getElementById('bottomNextWeekBtn').addEventListener('click', navigateToNextWeek);
-                
-                updateWeekNavButtons();
-            }
-            
-            setTimeout(() => {
-                document.querySelectorAll('.artist-link, .artist-page-link').forEach(link => {
-                    link.addEventListener('click', function() {
-                        const artist = this.dataset.artist;
-                        appState.navigationHistory.push({
-                            view: 'chart',
-                            chart: appState.activeChart,
-                            date: appState.currentDate,
-                            year: appState.currentYear
-                        });
-                        renderArtistPage(artist);
-                    });
-                });
-            }, 100);
-
-            setTimeout(() => {
-                document.querySelectorAll('.chart-run-link-btn').forEach(btn => {
-                    const chartType = btn.dataset.chart;
-                    const itemKey = btn.dataset.key;
-                    btn.addEventListener('click', function() {
-                         showChartRunModal(chartType, itemKey);
-                    });
-                });
-            }, 100);
-        }
-
-        function updateWeekNavButtons() {
-            const chartType = appState.activeChart;
-            const dates = Object.keys(appState.chartData[chartType]).sort();
-            const currentIndex = dates.indexOf(appState.currentDate);
-            
-            const prevBtn = document.getElementById('prevWeekBtn');
-            const nextBtn = document.getElementById('nextWeekBtn');
-            const bottomPrevBtn = document.getElementById('bottomPrevWeekBtn');
-            const bottomNextBtn = document.getElementById('bottomNextWeekBtn');
-            
-            if (prevBtn) prevBtn.disabled = currentIndex <= 0;
-            if (nextBtn) nextBtn.disabled = currentIndex >= dates.length - 1;
-            if (bottomPrevBtn) bottomPrevBtn.disabled = currentIndex <= 0;
-            if (bottomNextBtn) bottomNextBtn.disabled = currentIndex >= dates.length - 1;
-        }
-
-        function navigateToPrevWeek() {
-            const chartType = appState.activeChart;
-            const dates = Object.keys(appState.chartData[chartType]).sort();
-            const currentIndex = dates.indexOf(appState.currentDate);
-            
-            if (currentIndex > 0) {
-                appState.currentDate = dates[currentIndex - 1];
-                appState.sharedDate = appState.currentDate;
-                
-                const otherCharts = ['songs', 'artists', 'albums'].filter(c => c !== chartType);
-                for(const otherChart of otherCharts) {
-                    if (appState.chartData[otherChart][appState.sharedDate]) {
-                        appState.chartData[otherChart].activeDate = appState.sharedDate;
-                    }
-                }
-                
-                document.getElementById('chartContainer').innerHTML = renderChartItems();
-                updateWeekNavButtons();
-                loadSpotifyImages();
-                
-                if (window.flatpickr && document.getElementById('weekSelector')) {
-                    const datePicker = document.getElementById('weekSelector')._flatpickr;
-                    if (datePicker) {
-                        datePicker.setDate(appState.currentDate);
-                    }
-                }
-            }
-        }
-
-        function navigateToNextWeek() {
-            const chartType = appState.activeChart;
-            const dates = Object.keys(appState.chartData[chartType]).sort();
-            const currentIndex = dates.indexOf(appState.currentDate);
-            
-            if (currentIndex < dates.length - 1) {
-                appState.currentDate = dates[currentIndex + 1];
-                appState.sharedDate = appState.currentDate;
-                
-                const otherCharts = ['songs', 'artists', 'albums'].filter(c => c !== chartType);
-                for(const otherChart of otherCharts) {
-                    if (appState.chartData[otherChart][appState.sharedDate]) {
-                        appState.chartData[otherChart].activeDate = appState.sharedDate;
-                    }
-                }
-                
-                document.getElementById('chartContainer').innerHTML = renderChartItems();
-                updateWeekNavButtons();
-                loadSpotifyImages();
-                
-                if (window.flatpickr && document.getElementById('weekSelector')) {
-                    const datePicker = document.getElementById('weekSelector')._flatpickr;
-                    if (datePicker) {
-                        datePicker.setDate(appState.currentDate);
-                    }
-                }
-            }
+            appState.albumDetailsData = albumAggregatedData;
         }
 
         function renderArtistPage(artistName) {
@@ -2408,11 +2386,145 @@
             loadArtistImage(artistName);
         }
 
+        function renderAlbumPage(albumName, artistName) {
+            appState.currentView = 'album';
+            
+            const albumKey = `${albumName.toLowerCase().trim()}:${artistName.toLowerCase().trim()}`;
+            const albumData = appState.albumDetailsData[albumKey];
+            
+            if (!albumData) {
+                appContainer.innerHTML = `
+                    <div class="max-w-4xl mx-auto text-center p-8">
+                        <button id="backButton" class="back-button mb-6 flex items-center text-accent hover:text-accent-dark font-semibold transition-colors">
+                            <i class="fas fa-arrow-left mr-2"></i> Voltar
+                        </button>
+                        <i class="fas fa-compact-disc text-6xl text-gray-400 mb-4"></i>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Álbum não encontrado</h2>
+                        <p class="text-gray-500">A página do álbum solicitada não pode ser encontrada.</p>
+                    </div>
+                `;
+                document.getElementById('backButton').addEventListener('click', navigateBack);
+                return;
+            }
+
+            // Ordena as músicas por pico de posição
+            const sortedSongs = Object.values(albumData.songs).sort((a, b) => {
+                if (a.peak !== b.peak) {
+                    return a.peak - b.peak;
+                }
+                return b.weeks - a.weeks;
+            });
+
+            // Converte o chart-run para um array ordenado
+            const sortedChartRun = Object.keys(albumData.chartRun).sort().map(date => {
+                return {
+                    date: date,
+                    position: albumData.chartRun[date].position,
+                    songsCount: albumData.chartRun[date].songsCount
+                };
+            });
+
+            // Renderiza o cabeçalho com as estatísticas do álbum
+            const albumStatsHtml = `
+                <div class="bg-gray-100 rounded-lg p-4 mb-8 text-sm">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div><p class="font-bold text-secondary">Pico:</p><p class="text-gray-500">#${albumData.peak === Infinity ? 'N/A' : albumData.peak}</p></div>
+                        <div><p class="font-bold text-secondary">Semanas:</p><p class="text-gray-500">${albumData.totalWeeks}</p></div>
+                        <div><p class="font-bold text-secondary">Unidades:</p><p class="text-gray-500">${albumData.units > 0 ? albumData.units.toLocaleString() : 'N/A'}</p></div>
+                        <div><p class="font-bold text-secondary">Certificação:</p><p class="text-gray-500">${albumData.certification}</p></div>
+                    </div>
+                </div>
+            `;
+
+            // Renderiza o chart-run
+            const chartRunHtml = `
+                <h3 class="text-xl font-bold mb-4 text-secondary section-title-artist">Chart-run</h3>
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm mb-8">
+                    ${sortedChartRun.map(entry => `
+                        <a href="#" class="flex justify-between items-center py-2 px-4 border-b border-gray-200 last:border-b-0 chart-run-link" data-date="${entry.date}">
+                            <span class="font-medium text-secondary">Semana de ${entry.date}</span>
+                            <div class="flex items-center space-x-4 text-sm text-gray-500 flex-shrink-0 ml-4">
+                                <span class="font-semibold text-secondary">#${entry.position}</span>
+                                <span>(${entry.songsCount} Músicas)</span>
+                            </div>
+                        </a>
+                    `).join('')}
+                </div>
+            `;
+
+            // Renderiza a lista de músicas
+            const songsHtml = `
+                <h3 class="text-xl font-bold mb-4 text-secondary section-title-artist">Músicas do Hot 100</h3>
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    ${sortedSongs.map(song => `
+                        <div class="flex justify-between items-center py-2 px-4 border-b border-gray-200 last:border-b-0">
+                            <span class="font-medium text-secondary truncate">${song.title}</span>
+                            <div class="flex items-center space-x-4 text-sm text-gray-500 flex-shrink-0 ml-4">
+                                <span>Pico <span class="font-semibold text-secondary">#${song.peak}</span></span>
+                                <span><span class="font-semibold text-secondary">${song.weeks}</span> Semanas</span>
+                                <span><span class="font-semibold text-secondary">${song.units.toLocaleString()}</span> Unidades</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            appContainer.innerHTML = `
+                <div class="max-w-4xl mx-auto fade-in">
+                    <button id="backButton" class="back-button mb-6 flex items-center text-accent hover:text-accent-dark font-semibold transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i> Voltar
+                    </button>
+                    <div class="flex flex-col sm:flex-row items-center sm:items-end mb-6">
+                        <div id="albumImagePlaceholder" class="w-24 h-24 sm:w-32 sm:h-32 rounded-lg overflow-hidden mr-0 sm:mr-6 mb-4 sm:mb-0 shadow-lg flex-shrink-0 placeholder-art">
+                            <i class="fas fa-compact-disc text-4xl text-gray-400"></i>
+                        </div>
+                        <div class="text-center sm:text-left">
+                            <h2 class="text-4xl font-extrabold text-secondary mb-1">${albumName}</h2>
+                            <p class="text-gray-500 text-lg">Álbum de <span class="artist-link" data-artist="${artistName}">${artistName}</span></p>
+                            <p class="text-gray-500 text-sm mt-1">Total de ${Object.keys(albumData.songs).length} músicas no chart</p>
+                        </div>
+                    </div>
+                    
+                    ${albumStatsHtml}
+                    ${chartRunHtml}
+                    ${songsHtml}
+                </div>
+            `;
+            
+            document.getElementById('backButton').addEventListener('click', navigateBack);
+            
+            document.querySelectorAll('.artist-link').forEach(link => {
+                link.addEventListener('click', function() {
+                    appState.navigationHistory.push({ view: 'album' });
+                    renderArtistPage(artistName);
+                });
+            });
+            
+            document.querySelectorAll('.chart-run-link').forEach(link => {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const date = this.dataset.date;
+                    showChartPage('songs', date);
+                });
+            });
+
+            loadAlbumImage(albumName, artistName);
+        }
+
         async function loadArtistImage(artistName) {
             const imageUrl = await getSpotifyImage(artistName, 'artist');
             const imageElement = document.getElementById('artistImagePlaceholder');
             if (imageElement && imageUrl) {
                 imageElement.innerHTML = `<img src="${imageUrl}" alt="${artistName}" class="w-full h-full object-cover">`;
+                imageElement.classList.remove('placeholder-art');
+            }
+        }
+
+        async function loadAlbumImage(albumName, artistName) {
+            const imageUrl = await getSpotifyImage(`${albumName} ${artistName}`, 'album');
+            const imageElement = document.getElementById('albumImagePlaceholder');
+            if (imageElement && imageUrl) {
+                imageElement.innerHTML = `<img src="${imageUrl}" alt="${albumName}" class="w-full h-full object-cover rounded-lg">`;
                 imageElement.classList.remove('placeholder-art');
             }
         }
@@ -2524,6 +2636,10 @@
                 const failedCharts = results.filter(result => result.status === 'rejected');
                 if (failedCharts.length > 0) {
                     console.error('Some charts failed to load:', failedCharts);
+                }
+                
+                if (chartsConfig.songs.loaded) {
+                    processAlbumStats();
                 }
                 
                 const yearEndCharts = ['yearEndSongs', 'yearEndArtists', 'yearEndAlbums'];
