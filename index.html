@@ -1001,7 +1001,7 @@
                     appState.chartData[chartType] = dataByYear;
                     
                     const years = Object.keys(dataByYear).sort((a, b) => b - a);
-                    const mostRecentYear = years?.[0];
+                    const mostRecentYear = years?.[0] || new Date().getFullYear().toString();
                     
                     if (mostRecentYear && dataByYear[mostRecentYear]) {
                         appState.top3Data[chartType] = dataByYear[mostRecentYear]
@@ -1831,7 +1831,7 @@
                                 ` : ''}
                                 ${isGoat || isYearEnd ? `
                                 <div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
-                                    ${isYearEnd ? `<span>Year: ${year}</span>` : ''}
+                                    ${isGoat ? `<span>Year: ${year}</span>` : ''}
                                     ${peak ? `<span>Peak: #${peak}</span>` : ''}
                                     ${weeks ? `<span>Weeks: ${weeks}</span>` : ''}
                                 </div>
