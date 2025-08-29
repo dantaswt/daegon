@@ -508,9 +508,6 @@
                 <button id="navChartBeat" class="text-sm font-semibold text-gray-700 hover:text-accent transition-colors">
                     Chart Beat
                 </button>
-                <button id="navStats" class="text-sm font-semibold text-gray-700 hover:text-accent transition-colors">
-                    Stats
-                </button>
             </nav>
         </div>
     </header>
@@ -610,13 +607,6 @@
                 entityType: 'artist',
                 icon: 'fa-chart-bar',
                 loaded: false
-            },
-            stats: {
-                url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=843494096',
-                title: 'Records',
-                entityType: 'song',
-                icon: 'fa-star',
-                loaded: false
             }
         };
 
@@ -663,8 +653,7 @@
                 goatSongs: {},
                 goatArtists: {},
                 goatAlbums: {},
-                artistStats: {},
-                stats: {}
+                artistStats: {}
             },
             currentDate: null,
             isLoading: false,
@@ -681,8 +670,7 @@
                 goatSongs: {},
                 goatArtists: {},
                 goatAlbums: {},
-                artistStats: {},
-                stats: {}
+                artistStats: {}
             },
             top3Data: {
                 songs: [],
@@ -712,8 +700,7 @@
             },
             currentBlog: 'hot100',
             sharedDate: null,
-            artistDetailsData: {},
-            currentRecord: null
+            artistDetailsData: {}
         };
 
         // --- DOM ELEMENTS ---
@@ -898,31 +885,7 @@
                     record: findIndex(['record'])
                 };
                 
-                if (chartType === 'stats') {
-                    const recordIndex = appState.colMaps[chartType].record;
-                    const positionIndex = appState.colMaps[chartType].position;
-                    const songIndex = appState.colMaps[chartType].song;
-                    const artistIndex = appState.colMaps[chartType].artist;
-
-                    if (recordIndex === -1 || positionIndex === -1 || songIndex === -1 || artistIndex === -1) {
-                        throw new Error(`Required columns for stats page not found.`);
-                    }
-
-                    const dataByRecord = {};
-                    data.forEach(row => {
-                        const record = row[recordIndex];
-                        if (!record) return;
-
-                        if (!dataByRecord[record]) {
-                            dataByRecord[record] = [];
-                        }
-
-                        dataByRecord[record].push(row);
-                    });
-
-                    appState.chartData[chartType] = dataByRecord;
-                    appState.currentRecord = Object.keys(dataByRecord)?.[0] || null;
-                } else if (chartType === 'artistStats') {
+                if (chartType === 'artistStats') {
                     appState.artistDetailsData = {};
                     data.forEach(row => {
                         const artistName = row[appState.colMaps.artistStats.artist];
@@ -1489,7 +1452,7 @@
                 Object.entries(chartsConfig).filter(([key]) => key.includes('yearEnd')) :
                 isGoat ? 
                 Object.entries(chartsConfig).filter(([key]) => key.includes('goat')) :
-                Object.entries(chartsConfig).filter(([key]) => !key.includes('yearEnd') && !key.includes('goat') && key !== 'artistStats' && key !== 'stats');
+                Object.entries(chartsConfig).filter(([key]) => !key.includes('yearEnd') && !key.includes('goat') && key !== 'artistStats');
 
             appContainer.innerHTML = `
                 <div class="max-w-4xl mx-auto">
@@ -1593,112 +1556,6 @@
                         loadSpotifyImages();
                     });
                 });
-            }
-        }
-        
-        // Novo código para a página de Stats
-        function showStatsPage() {
-            appState.currentView = 'stats';
-            const recordsData = appState.chartData.stats;
-            const records = Object.keys(recordsData).sort();
-            
-            appContainer.innerHTML = `
-                <div class="max-w-4xl mx-auto">
-                    <button id="backButton" class="back-button mb-6 flex items-center text-accent hover:text-accent-dark font-semibold transition-colors">
-                        <i class="fas fa-arrow-left mr-2"></i> Voltar para Home
-                    </button>
-                    <h2 class="text-3xl font-bold mb-6 section-title text-secondary">Records</h2>
-                    
-                    <div class="mb-6 flex justify-center">
-                        <select id="recordSelector" class="form-select block w-full sm:w-1/2 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-accent focus:border-accent">
-                            <option value="">Selecione um Record</option>
-                            ${records.map(record => `<option value="${record}" ${appState.currentRecord === record ? 'selected' : ''}>${record}</option>`).join('')}
-                        </select>
-                    </div>
-                    
-                    <div id="statsTop10" class="bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                        ${appState.currentRecord ? renderTop10List(appState.currentRecord) : '<div class="text-center p-8 text-gray-500">Selecione um record para visualizar o Top 10.</div>'}
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('backButton').addEventListener('click', navigateBack);
-            document.getElementById('recordSelector').addEventListener('change', function() {
-                const selectedRecord = this.value;
-                appState.currentRecord = selectedRecord;
-                if (selectedRecord) {
-                    document.getElementById('statsTop10').innerHTML = renderTop10List(selectedRecord);
-                    loadStatsImages(selectedRecord);
-                } else {
-                    document.getElementById('statsTop10').innerHTML = '<div class="text-center p-8 text-gray-500">Selecione um record para visualizar o Top 10.</div>';
-                }
-            });
-            
-            if (appState.currentRecord) {
-                loadStatsImages(appState.currentRecord);
-            }
-        }
-        
-        function renderTop10List(record) {
-            const items = appState.chartData.stats[record];
-            if (!items || items.length === 0) {
-                return '<div class="text-center p-8 text-gray-500">Nenhum dado encontrado para este record.</div>';
-            }
-            
-            const colMap = appState.colMaps.stats;
-            const top10 = items.slice(0, 10).sort((a, b) => parseInt(a[colMap.position]) - parseInt(b[colMap.position]));
-            
-            return top10.map((row, index) => {
-                const position = parseInt(row[colMap.position]);
-                const song = row[colMap.song];
-                const artist = row[colMap.artist];
-                
-                return `
-                    <div class="chart-row py-4 px-4">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 w-10 text-center relative text-secondary">
-                                <span class="text-xl font-bold">${position}</span>
-                            </div>
-                            <div class="flex-shrink-0 mx-4">
-                                <div class="w-12 h-12 rounded-md shadow-md overflow-hidden spotify-image" id="stats-image-${record}-${index}">
-                                    <div class="w-full h-full placeholder-art">
-                                        <i class="fas fa-music text-gray-400"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex-grow min-w-0 text-secondary">
-                                <p class="font-bold truncate">${song}</p>
-                                <p class="text-gray-500 text-sm truncate">${artist}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-        
-        async function loadStatsImages(record) {
-            const items = appState.chartData.stats[record];
-            if (!items) return;
-            const colMap = appState.colMaps.stats;
-            const top10 = items.slice(0, 10).sort((a, b) => parseInt(a[colMap.position]) - parseInt(b[colMap.position]));
-            
-            for (let i = 0; i < top10.length; i++) {
-                const row = top10[i];
-                const song = row[colMap.song];
-                const artist = row[colMap.artist];
-                const query = `${artist} ${song}`;
-                
-                try {
-                    const imageUrl = await getSpotifyImage(query, 'album');
-                    const imageElement = document.getElementById(`stats-image-${record}-${i}`);
-                    
-                    if (imageElement && imageUrl) {
-                        imageElement.innerHTML = `<img src="${imageUrl}" alt="${query}" class="w-full h-full object-cover">`;
-                        imageElement.classList.remove('placeholder-art');
-                    }
-                } catch (error) {
-                    console.error('Error loading image for stats:', error);
-                }
             }
         }
         
@@ -1829,9 +1686,15 @@
                                     ${weeks ? `<span>WOC: ${weeks}</span>` : ''}
                                 </div>
                                 ` : ''}
-                                ${isGoat || isYearEnd ? `
+                                ${isGoat ? `
                                 <div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
-                                    ${isGoat ? `<span>Year: ${year}</span>` : ''}
+                                    <span>Year: ${year}</span>
+                                    ${peak ? `<span>Peak: #${peak}</span>` : ''}
+                                    ${weeks ? `<span>Weeks: ${weeks}</span>` : ''}
+                                </div>
+                                ` : ''}
+                                ${isYearEnd ? `
+                                <div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
                                     ${peak ? `<span>Peak: #${peak}</span>` : ''}
                                     ${weeks ? `<span>Weeks: ${weeks}</span>` : ''}
                                 </div>
@@ -2662,7 +2525,6 @@
                     fetchAndProcessChartData('goatArtists'),
                     fetchAndProcessChartData('goatAlbums'),
                     fetchAndProcessChartData('artistStats'),
-                    fetchAndProcessChartData('stats'), // Novo
                     fetchAndProcessChartBeatData()
                 ]);
                 
@@ -2703,10 +2565,6 @@
             
             document.getElementById('navChartBeat').addEventListener('click', () => {
                 showChartBeatPage();
-            });
-            
-            document.getElementById('navStats').addEventListener('click', () => {
-                showStatsPage();
             });
             
             closeModal.addEventListener('click', () => {
