@@ -831,16 +831,10 @@
             result.push(current.trim());
             return result;
         }
-        
-        // Função central para buscar e processar dados de qualquer gráfico.
-        // A lógica de processamento foi movida para dentro desta função para
-        // que ela possa ser chamada de forma modular.
-        async function fetchAndProcessChartData(chartType) {
-            if (chartsConfig?.[chartType]?.loaded) {
-                // Se os dados já foram carregados, retorna imediatamente.
-                return true;
-            }
 
+        async function fetchAndProcessChartData(chartType) {
+            if (chartsConfig?.[chartType]?.loaded) return true;
+            
             const config = chartsConfig?.[chartType];
             const url = `${config.url}&_=${new Date().getTime()}`;
             
@@ -1318,36 +1312,16 @@
                 </div>
             `;
             
-            // Adiciona listeners para os cartões de gráfico.
-            // A lógica de carregamento dinâmico foi movida para esta função.
             document.querySelectorAll('.chart-card').forEach(card => {
-                card.addEventListener('click', async function() {
+                card.addEventListener('click', function() {
                     const chartType = this.dataset.chart;
-                    
-                    // Exibe um loader temporário enquanto os dados são buscados.
-                    const cardContent = this.querySelector('.space-y-2');
-                    cardContent.innerHTML = `
-                        <div class="text-center py-4">
-                            <div class="loader mx-auto mb-2" style="width: 20px; height: 20px;"></div>
-                            <p class="text-xs text-gray-500">Loading...</p>
-                        </div>
-                    `;
-
-                    // Carrega os dados do gráfico específico.
-                    await fetchAndProcessChartData(chartType);
-
-                    // Navega para a página do gráfico.
                     showChartPage(chartType);
                 });
             });
 
             document.querySelectorAll('.top-card').forEach(card => {
-                card.addEventListener('click', async function() {
+                card.addEventListener('click', function() {
                     const chartType = this.dataset.chart;
-
-                    // Carrega os dados do gráfico, se ainda não tiverem sido carregados.
-                    await fetchAndProcessChartData(chartType);
-
                     showChartPage(chartType);
                 });
             });
@@ -1384,17 +1358,14 @@
         function renderChartCard(chartType, title) {
             const top3 = appState.top3Data[chartType] || [];
             
-            // Verifica se os dados já foram carregados para esta seção.
-            const isLoaded = chartsConfig[chartType]?.loaded;
-
             return `
                 <div class="chart-card cursor-pointer bg-white border border-gray-200 rounded-lg p-4 transition-all duration-300 hover:border-accent shadow-sm ${chartType.includes('goat') ? 'hover:border-gold goat-card-border' : ''}" data-chart="${chartType}">
                     <div class="flex items-center justify-between mb-3">
                         <h4 class="font-semibold text-secondary">${title}</h4>
-                        <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">Top ${top3.length || 0}</span>
+                        <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">Top ${top3.length}</span>
                     </div>
                     <div class="space-y-2">
-                        ${isLoaded ? top3.map((item, index) => `
+                        ${top3.length > 0 ? top3.map((item, index) => `
                             <div class="flex items-center text-sm text-secondary">
                                 <span class="font-bold w-6 ${index === 0 ? 'text-accent' : 'text-gray-500'} ${chartType.includes('goat') && index === 0 ? 'goat-text' : ''}">${item.position}</span>
                                 <span class="truncate">${item.name}</span>
@@ -1443,19 +1414,7 @@
             }
         }
 
-        // Função showChartPage refatorada para a nova lógica de carregamento.
-        async function showChartPage(chartType, dateToSet = null) {
-            // Verifica se os dados já foram carregados, se não, exibe loader.
-            if (!chartsConfig[chartType]?.loaded) {
-                appContainer.innerHTML = `
-                    <div class="max-w-4xl mx-auto p-8 text-center">
-                        <div class="loader mx-auto mb-4"></div>
-                        <p class="text-gray-500">Loading chart data...</p>
-                    </div>
-                `;
-                await fetchAndProcessChartData(chartType);
-            }
-
+        function showChartPage(chartType, dateToSet = null) {
             if (appState.currentView === 'chart' && appState.activeChart) {
                 appState.navigationHistory.push({
                     view: 'chart',
@@ -1729,6 +1688,7 @@
                                 ` : ''}
                                 ${isGoat ? `
                                 <div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                                    <span>Year: ${year}</span>
                                     ${peak ? `<span>Peak: #${peak}</span>` : ''}
                                     ${weeks ? `<span>Weeks: ${weeks}</span>` : ''}
                                 </div>
@@ -1900,7 +1860,7 @@
         }
 
         // --- ALL ENTRIES PAGE FUNCTIONS (SIMPLIFIED) ---
-        async function showAllEntriesPage() {
+        function showAllEntriesPage() {
             appState.currentView = 'allEntries';
             
             appContainer.innerHTML = `
@@ -1912,9 +1872,29 @@
                     <h2 class="text-3xl font-bold mb-6 section-title text-secondary">All Entries</h2>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        ${renderAllEntriesCard('songs', 'All Songs', appState.allEntries.songs.length, 'Browse all song entries from the Hot 100 chart')}
-                        ${renderAllEntriesCard('artists', 'All Artists', Object.keys(appState.artistDetailsData).length, 'Browse all artist entries from the Artist 50 chart')}
-                        ${renderAllEntriesCard('albums', 'All Albums', appState.allEntries.albums.length, 'Browse all album entries from the Top Albums chart')}
+                        <div class="cursor-pointer bg-white border border-gray-200 rounded-lg p-4 transition-all duration-300 hover:border-accent shadow-sm" id="allSongsBtn">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-semibold text-secondary">All Songs</h4>
+                                <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">${appState.allEntries.songs.length} entries</span>
+                            </div>
+                            <p class="text-sm text-gray-500">Browse all song entries from the Hot 100 chart</p>
+                        </div>
+                        
+                        <div class="cursor-pointer bg-white border border-gray-200 rounded-lg p-4 transition-all duration-300 hover:border-accent shadow-sm" id="allArtistsBtn">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-semibold text-secondary">All Artists</h4>
+                                <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">${Object.keys(appState.artistDetailsData).length} artists</span>
+                            </div>
+                            <p class="text-sm text-gray-500">Browse all artist entries from the Artist 50 chart</p>
+                        </div>
+                        
+                        <div class="cursor-pointer bg-white border border-gray-200 rounded-lg p-4 transition-all duration-300 hover:border-accent shadow-sm" id="allAlbumsBtn">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-semibold text-secondary">All Albums</h4>
+                                <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">${appState.allEntries.albums.length} entries</span>
+                            </div>
+                            <p class="text-sm text-gray-500">Browse all album entries from the Top Albums chart</p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1922,44 +1902,11 @@
             document.getElementById('backButton').addEventListener('click', function() {
                 navigateBack();
             });
-
-            // Carregamento dinâmico para as seções de "All Entries"
-            document.getElementById('allSongsBtn').addEventListener('click', async () => {
-                const entryType = 'songs';
-                if (!chartsConfig[entryType].loaded) {
-                    await fetchAndProcessChartData(entryType);
-                }
-                showAllEntriesList(entryType);
-            });
-            document.getElementById('allAlbumsBtn').addEventListener('click', async () => {
-                const entryType = 'albums';
-                if (!chartsConfig[entryType].loaded) {
-                    await fetchAndProcessChartData(entryType);
-                }
-                showAllEntriesList(entryType);
-            });
-            document.getElementById('allArtistsBtn').addEventListener('click', async () => {
-                const entryType = 'artistStats';
-                if (!chartsConfig[entryType].loaded) {
-                    await fetchAndProcessChartData(entryType);
-                }
-                showAllArtistsPage();
-            });
+            
+            document.getElementById('allSongsBtn').addEventListener('click', () => showAllEntriesList('songs'));
+            document.getElementById('allArtistsBtn').addEventListener('click', showAllArtistsPage);
+            document.getElementById('allAlbumsBtn').addEventListener('click', () => showAllEntriesList('albums'));
         }
-
-        function renderAllEntriesCard(id, title, count, description) {
-             const isLoaded = chartsConfig[id]?.loaded || (id === 'artists' && chartsConfig.artistStats.loaded);
-             return `
-                <div class="cursor-pointer bg-white border border-gray-200 rounded-lg p-4 transition-all duration-300 hover:border-accent shadow-sm" id="all${id.charAt(0).toUpperCase() + id.slice(1)}Btn">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="font-semibold text-secondary">${title}</h4>
-                        <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">${isLoaded ? count : 'Loading...'} entries</span>
-                    </div>
-                    <p class="text-sm text-gray-500">${description}</p>
-                </div>
-             `;
-        }
-
 
         function showAllEntriesList(entryType) {
             appState.currentView = 'allEntriesList';
@@ -2030,18 +1977,7 @@
         }
 
         // --- FUNÇÕES DE RENDERIZAÇÃO DO CHART BEAT ---
-        async function renderChartBeatPage() {
-             // Carregamento dinâmico para os dados do Chart Beat
-            if (!chartsConfig.hot100.loaded) {
-                appContainer.innerHTML = `
-                    <div class="max-w-4xl mx-auto p-8 text-center">
-                        <div class="loader mx-auto mb-4"></div>
-                        <p class="text-gray-500">Loading Chart Beat data...</p>
-                    </div>
-                `;
-                await fetchAndProcessChartBeatData();
-            }
-
+        function renderChartBeatPage() {
             appState.currentView = 'chartBeat';
             
             const hot100Articles = appState.chartBeatData.hot100 || [];
@@ -2271,11 +2207,9 @@
             document.getElementById('backButton').addEventListener('click', navigateBack);
             
             document.querySelectorAll('.chart-nav-btn').forEach(btn => {
-                btn.addEventListener('click', async function() {
+                btn.addEventListener('click', function() {
                     const chartType = this.dataset.chart;
-                    
-                    // Lógica de carregamento dinâmico para os botões de navegação.
-                    await showChartPage(chartType);
+                    showChartPage(chartType);
                 });
             });
             
@@ -2296,14 +2230,8 @@
             
             setTimeout(() => {
                 document.querySelectorAll('.artist-link, .artist-page-link').forEach(link => {
-                    link.addEventListener('click', async function() {
+                    link.addEventListener('click', function() {
                         const artist = this.dataset.artist;
-
-                        // Carrega os dados de estatísticas de artista, se ainda não estiverem carregados.
-                        if (!chartsConfig.artistStats.loaded) {
-                           await fetchAndProcessChartData('artistStats');
-                        }
-
                         appState.navigationHistory.push({
                             view: 'chart',
                             chart: appState.activeChart,
@@ -2400,18 +2328,7 @@
             }
         }
 
-        async function renderArtistPage(artistName) {
-             // Carregamento dinâmico para os dados de estatísticas de artista.
-            if (!chartsConfig.artistStats.loaded) {
-                appContainer.innerHTML = `
-                    <div class="max-w-4xl mx-auto p-8 text-center">
-                        <div class="loader mx-auto mb-4"></div>
-                        <p class="text-gray-500">Loading artist data...</p>
-                    </div>
-                `;
-                await fetchAndProcessChartData('artistStats');
-            }
-
+        function renderArtistPage(artistName) {
             appState.currentView = 'artist';
             appState.currentArtist = artistName;
             const artistData = appState.artistDetailsData[artistName];
@@ -2507,18 +2424,7 @@
             }
         }
 
-        async function showAllArtistsPage() {
-            // Carregamento dinâmico para os dados de estatísticas de artista.
-            if (!chartsConfig.artistStats.loaded) {
-                 appContainer.innerHTML = `
-                    <div class="max-w-4xl mx-auto p-8 text-center">
-                        <div class="loader mx-auto mb-4"></div>
-                        <p class="text-gray-500">Loading artist data...</p>
-                    </div>
-                `;
-                await fetchAndProcessChartData('artistStats');
-            }
-
+        function showAllArtistsPage() {
             appState.currentView = 'allArtists';
             
             appState.navigationHistory.push({
@@ -2604,27 +2510,42 @@
             }).join('');
         }
 
-        // A função initializeApp foi refatorada para carregar apenas os dados
-        // necessários para a página inicial, tornando o carregamento inicial muito mais rápido.
         async function initializeApp() {
-            showMessage('loading', 'Carregando dados essenciais...');
+            showMessage('loading', 'Loading charts data...');
             
             try {
-                // Carrega apenas os dados da página inicial e do Chart Beat.
-                const initialLoadPromises = [
+                const results = await Promise.allSettled([
                     fetchAndProcessChartData('songs'),
                     fetchAndProcessChartData('artists'),
                     fetchAndProcessChartData('albums'),
+                    fetchAndProcessChartData('yearEndSongs'),
+                    fetchAndProcessChartData('yearEndArtists'),
+                    fetchAndProcessChartData('yearEndAlbums'),
+                    fetchAndProcessChartData('goatSongs'),
+                    fetchAndProcessChartData('goatArtists'),
+                    fetchAndProcessChartData('goatAlbums'),
+                    fetchAndProcessChartData('artistStats'),
                     fetchAndProcessChartBeatData()
-                ];
+                ]);
                 
-                await Promise.allSettled(initialLoadPromises);
+                const failedCharts = results.filter(result => result.status === 'rejected');
+                if (failedCharts.length > 0) {
+                    console.error('Some charts failed to load:', failedCharts);
+                }
                 
-                // Exibe a página inicial.
+                const yearEndCharts = ['yearEndSongs', 'yearEndArtists', 'yearEndAlbums'];
+                for (const chartType of yearEndCharts) {
+                    const years = Object.keys(appState.chartData[chartType]).sort((a, b) => b - a);
+                    if (years.length > 0) {
+                        appState.currentYear = years[0];
+                        break;
+                    }
+                }
+
                 renderHomePage();
                 
             } catch (error) {
-                showMessage('error', 'Ocorreu um erro ao carregar os dados. Tente novamente.');
+                showMessage('error', 'Error loading data: ' + error.message);
             }
         }
 
@@ -2639,7 +2560,7 @@
             });
             
             document.getElementById('navAllEntries').addEventListener('click', () => {
-                 showAllEntriesPage();
+                showAllEntriesPage();
             });
             
             document.getElementById('navChartBeat').addEventListener('click', () => {
@@ -2660,3 +2581,4 @@
 </body>
 
 </html>
+
