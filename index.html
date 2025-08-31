@@ -1206,17 +1206,6 @@
             await loadBlogImages();
         }
 
-        async function loadBlogImages() {
-            for (const [key, articles] of Object.entries(appState.chartBeatData)) {
-                for (let article of articles) {
-                    if (article.artist) {
-                        const imageUrl = await getSpotifyImage(article.artist, 'artist');
-                        article.imageUrl = imageUrl;
-                    }
-                }
-            }
-        }
-
         // --- RENDER FUNCTIONS ---
         function renderHomePage() {
             appState.currentView = 'home';
@@ -1622,7 +1611,6 @@
                 const units = colMap.units !== -1 ? row[colMap.units] : null;
                 const totalUnits = colMap.totalUnits !== -1 ? row[colMap.totalUnits] : null;
                 const certification = colMap.certification !== -1 ? row[colMap.certification] : null;
-                const year = colMap.year !== -1 ? row[colMap.year] : null;
                 
                 const name = chartType.includes('Songs') || chartType === 'songs' ? (row[colMap.song] || 'Unknown') : 
                              chartType.includes('Albums') || chartType === 'albums' ? (row[colMap.album] || 'Unknown') : 
@@ -1688,7 +1676,6 @@
                                 ` : ''}
                                 ${isGoat ? `
                                 <div class="flex items-center gap-4 mt-1 text-xs text-gray-500">
-                                    <span>Year: ${year}</span>
                                     ${peak ? `<span>Peak: #${peak}</span>` : ''}
                                     ${weeks ? `<span>Weeks: ${weeks}</span>` : ''}
                                 </div>
@@ -2581,4 +2568,3 @@
 </body>
 
 </html>
-
