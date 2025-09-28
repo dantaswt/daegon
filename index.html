@@ -170,7 +170,15 @@
             text-align: center;
         }
 
-        /* NOVO LAYOUT DO CHART SEMANAL */
+        /* NOVO LAYOUT DO CHART SEMANAL COM CABEÇALHO FIXO */
+        .chart-container {
+            position: relative;
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+
         .chart-header {
             background-color: var(--header-blue);
             color: white;
@@ -178,14 +186,17 @@
             font-weight: bold;
             font-size: 14px;
             display: grid;
-            grid-template-columns: 60px 50px 1fr 100px 80px 80px;
+            grid-template-columns: 80px 60px 1fr 120px 80px 80px 80px;
             gap: 12px;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .chart-row-weekly {
             display: grid;
-            grid-template-columns: 60px 50px 1fr 100px 80px 80px;
+            grid-template-columns: 80px 60px 1fr 120px 80px 80px 80px;
             gap: 12px;
             align-items: center;
             padding: 12px 16px;
@@ -201,9 +212,17 @@
             background-color: white;
         }
 
-        .position-cell {
+        .position-diff-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .position-number {
             font-weight: bold;
             font-size: 16px;
+            min-width: 30px;
             text-align: center;
         }
 
@@ -220,12 +239,13 @@
             object-fit: cover;
         }
 
-        .diff-cell {
-            text-align: center;
+        .diff-indicator {
+            font-size: 11px;
             font-weight: bold;
-            font-size: 12px;
-            padding: 4px 8px;
+            padding: 2px 6px;
             border-radius: 4px;
+            min-width: 35px;
+            text-align: center;
         }
 
         .diff-new {
@@ -245,6 +265,11 @@
 
         .diff-re {
             background-color: #8b5cf6;
+            color: white;
+        }
+
+        .diff-equal {
+            background-color: #6b7280;
             color: white;
         }
 
@@ -269,7 +294,7 @@
             text-overflow: ellipsis;
         }
 
-        .units-cell, .peak-cell, .weeks-cell {
+        .units-cell, .lastweek-cell, .peak-cell, .weeks-cell {
             text-align: center;
             font-size: 12px;
         }
@@ -284,21 +309,27 @@
             color: #6b7280;
         }
 
+        .certification {
+            font-size: 11px;
+            color: #dc2626;
+            font-weight: bold;
+        }
+
         /* PRIMEIRA POSIÇÃO DESTACADA */
         .first-position {
             grid-column: 1 / -1;
             background: linear-gradient(135deg, rgba(0, 206, 209, 0.1) 0%, rgba(0, 206, 209, 0.05) 100%);
             border: 2px solid var(--accent);
             border-radius: 8px;
-            margin: 8px 0;
+            margin: 8px;
             padding: 16px;
             display: grid;
-            grid-template-columns: 80px 60px 1fr 120px 100px 100px;
+            grid-template-columns: 100px 80px 1fr 140px 100px 100px 100px;
             gap: 16px;
             align-items: center;
         }
 
-        .first-position .position-cell {
+        .first-position .position-number {
             font-size: 24px;
             color: var(--accent);
         }
@@ -324,15 +355,19 @@
 
         .chart-run-mini {
             display: flex;
-            height: 4px;
-            margin-top: 4px;
-            gap: 1px;
+            height: 6px;
+            margin-top: 6px;
+            gap: 2px;
+            background: #f3f4f6;
+            padding: 2px;
+            border-radius: 3px;
         }
 
         .chart-run-bar {
             flex: 1;
             background: #e5e7eb;
-            border-radius: 1px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
         }
 
         .chart-run-bar.active {
@@ -343,8 +378,12 @@
             background: var(--gold);
         }
 
-        /* LAYOUT PARA YEAR-END E GOAT */
-        .chart-row-simple {
+        .chart-run-bar:hover {
+            transform: scaleY(1.5);
+        }
+
+        /* LAYOUT PARA YEAR-END E GOAT COM IMAGENS */
+        .chart-row-with-image {
             display: flex;
             align-items: center;
             padding: 12px 16px;
@@ -352,13 +391,19 @@
             gap: 16px;
         }
 
-        .chart-row-simple .position-cell {
-            width: 40px;
-            text-align: center;
-            font-weight: bold;
+        .chart-row-with-image:nth-child(even) {
+            background-color: #f9fafb;
         }
 
-        .chart-row-simple .info-cell {
+        .chart-image-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .chart-info-expanded {
             flex: 1;
             min-width: 0;
         }
@@ -379,6 +424,57 @@
         .badge-weeks-at-1 {
             background-color: #3b82f6;
             color: #fff;
+        }
+
+        /* PÁGINA DO ARTISTA */
+        .artist-page {
+            max-width: 4xl;
+            margin: 0 auto;
+        }
+
+        .artist-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .artist-image-large {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
+        .artist-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
         }
     </style>
 </head>
@@ -454,7 +550,9 @@
             sharedDate: null,
             navigationHistory: [],
             loadedCharts: new Set(),
-            availableDates: []
+            availableDates: [],
+            // Nova propriedade para sincronização entre charts
+            syncDate: null
         };
 
         // --- ELEMENTOS DOM ---
@@ -503,7 +601,7 @@
                 }
                 
                 const response = await fetch(
-                    `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}&limit=5`,
+                    `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}&limit=3`,
                     { headers: { 'Authorization': `Bearer ${token}` } }
                 );
                 
@@ -520,6 +618,66 @@
                 return imageUrl;
             } catch (error) {
                 return null;
+            }
+        }
+
+        // --- FUNÇÃO PARA CARREGAR IMAGENS PARA CARDS DA TELA INICIAL ---
+        async function loadAllCardImages() {
+            const cardTypes = ['songs', 'artists', 'albums', 'yearEndSongs', 'yearEndArtists', 'yearEndAlbums', 'goatSongs', 'goatArtists', 'goatAlbums'];
+            
+            for (const chartType of cardTypes) {
+                const topItem = appState.top3Data[chartType]?.[0];
+                if (!topItem || !topItem.name || topItem.name === 'Unknown') continue;
+                
+                let query = '';
+                let type = '';
+                let albumQuery = null;
+                
+                if (chartType.includes('Songs') || chartType === 'songs') {
+                    query = topItem.artist;
+                    type = 'artist';
+                } else if (chartType.includes('Albums') || chartType === 'albums') {
+                    query = topItem.artist;
+                    type = 'album';
+                    albumQuery = `${topItem.artist} ${topItem.name}`;
+                } else if (chartType.includes('Artists') || chartType === 'artists') {
+                    query = topItem.name;
+                    type = 'artist';
+                } else if (chartType.includes('goatSongs')) {
+                    query = topItem.artist;
+                    type = 'artist';
+                } else if (chartType.includes('goatAlbums')) {
+                    query = topItem.artist;
+                    type = 'album';
+                    albumQuery = `${topItem.artist} ${topItem.name}`;
+                } else if (chartType.includes('goatArtists')) {
+                    query = topItem.name;
+                    type = 'artist';
+                } else if (chartType.includes('yearEndSongs')) {
+                    query = topItem.artist;
+                    type = 'artist';
+                } else if (chartType.includes('yearEndAlbums')) {
+                    query = topItem.artist;
+                    type = 'album';
+                    albumQuery = `${topItem.artist} ${topItem.name}`;
+                } else if (chartType.includes('yearEndArtists')) {
+                    query = topItem.name;
+                    type = 'artist';
+                }
+                
+                if (query && query !== 'Unknown') {
+                    try {
+                        const imageUrl = await getSpotifyImage(query, type, albumQuery);
+                        const imageElement = document.getElementById(`top-image-${chartType}`);
+                        
+                        if (imageElement && imageUrl) {
+                            imageElement.innerHTML = `<img src="${imageUrl}" alt="${query}" class="w-full h-full object-cover">`;
+                            imageElement.classList.remove('placeholder-art');
+                        }
+                    } catch (error) {
+                        console.error('Error loading card image:', error);
+                    }
+                }
             }
         }
 
@@ -686,6 +844,13 @@
                 appState.chartData[chartType][date] = dateGroups[date];
             });
 
+            // Sincronizar data se já houver uma data definida
+            if (appState.syncDate && appState.chartData[chartType][appState.syncDate]) {
+                appState.currentDate = appState.syncDate;
+            } else {
+                appState.currentDate = sortedDates[sortedDates.length - 1] || null;
+            }
+
             updateTop3Data(chartType);
             processChartRuns(chartType, data, colMap);
         }
@@ -712,7 +877,7 @@
                 }));
             } else {
                 const dates = Object.keys(data).sort();
-                const recentDate = dates[dates.length - 1];
+                const recentDate = appState.currentDate || dates[dates.length - 1];
                 if (recentDate && data[recentDate]) {
                     appState.top3Data[chartType] = data[recentDate]
                         .sort((a, b) => parseInt(a[colMap.position]) - parseInt(b[colMap.position]))
@@ -807,6 +972,8 @@
             `;
             
             setupHomePageListeners();
+            // Carregar imagens para todos os cards
+            loadAllCardImages();
         }
 
         function renderTopCard(chartType, title) {
@@ -874,7 +1041,8 @@
                 appState.currentYear = years[0] || new Date().getFullYear().toString();
             } else if (!isGoat) {
                 const dates = appState.availableDates.sort();
-                appState.currentDate = dates[dates.length - 1] || null;
+                // Usar data sincronizada se disponível, senão a mais recente
+                appState.currentDate = appState.syncDate || dates[dates.length - 1] || null;
             }
             
             renderChartPage();
@@ -908,7 +1076,7 @@
                         ${isYearEnd ? renderYearSelector(chartType) : isGoat ? '' : renderWeekSelector()}
                     </div>
                     
-                    <div id="chartContainer" class="bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                    <div class="chart-container">
                         ${renderChartItems()}
                     </div>
                     
@@ -935,7 +1103,10 @@
                     dateFormat: "Y-m-d",
                     onChange: function(selectedDates, dateStr) {
                         if (dateStr) {
+                            // Sincronizar data entre todos os charts
+                            appState.syncDate = dateStr;
                             appState.currentDate = dateStr;
+                            
                             document.getElementById('chartContainer').innerHTML = renderChartItems();
                             updateWeekNavButtons();
                             // Scroll para o topo
@@ -1027,7 +1198,7 @@
             const displayItems = sortedItems.slice(0, 100);
 
             if (isYearEnd || isGoat) {
-                return renderSimpleChart(displayItems, chartType, colMap);
+                return renderChartWithImages(displayItems, chartType, colMap);
             } else {
                 return renderWeeklyChart(displayItems, chartType, colMap);
             }
@@ -1039,7 +1210,8 @@
                     <div>This Week</div>
                     <div>Image</div>
                     <div>Song/Album/Artist</div>
-                    <div>Units</div>
+                    <div>Units/Total/Cert.</div>
+                    <div>Last Week</div>
                     <div>Peak Pos.</div>
                     <div>Wks on Chart</div>
                 </div>
@@ -1064,7 +1236,10 @@
                 if (position === 1) {
                     html += `
                         <div class="first-position">
-                            <div class="position-cell">${position}</div>
+                            <div class="position-diff-cell">
+                                <div class="position-number">${position}</div>
+                                ${diffInfo ? `<div class="diff-indicator ${diffInfo.class}">${diffInfo.symbol}</div>` : ''}
+                            </div>
                             <div class="image-cell">
                                 <div id="${imageId}" class="chart-image placeholder-art">
                                     <i class="fas ${chartsConfig[chartType].icon} text-gray-400"></i>
@@ -1083,6 +1258,7 @@
                                 ${totalUnits ? `<div class="total-units">${totalUnits} total</div>` : ''}
                                 ${certification ? `<div class="certification">${certification}</div>` : ''}
                             </div>
+                            <div class="lastweek-cell">${!lastWeek || lastWeek === '0' || lastWeek.toLowerCase() === 're' ? '-' : lastWeek}</div>
                             <div class="peak-cell">${peak || '-'}</div>
                             <div class="weeks-cell">${weeks || '-'}</div>
                         </div>
@@ -1090,7 +1266,10 @@
                 } else {
                     html += `
                         <div class="chart-row-weekly">
-                            <div class="position-cell">${position}</div>
+                            <div class="position-diff-cell">
+                                <div class="position-number">${position}</div>
+                                ${diffInfo ? `<div class="diff-indicator ${diffInfo.class}">${diffInfo.symbol}</div>` : ''}
+                            </div>
                             <div class="image-cell">
                                 <div id="${imageId}" class="chart-image placeholder-art">
                                     <i class="fas ${chartsConfig[chartType].icon} text-gray-400"></i>
@@ -1105,7 +1284,9 @@
                             <div class="units-cell">
                                 ${units && units !== '0' ? `<div class="units-value">${units} units</div>` : ''}
                                 ${totalUnits ? `<div class="total-units">${totalUnits} total</div>` : ''}
+                                ${certification ? `<div class="certification">${certification}</div>` : ''}
                             </div>
+                            <div class="lastweek-cell">${!lastWeek || lastWeek === '0' || lastWeek.toLowerCase() === 're' ? '-' : lastWeek}</div>
                             <div class="peak-cell">${peak || '-'}</div>
                             <div class="weeks-cell">${weeks || '-'}</div>
                         </div>
@@ -1119,7 +1300,7 @@
             return html;
         }
 
-        function renderSimpleChart(items, chartType, colMap) {
+        function renderChartWithImages(items, chartType, colMap) {
             let html = '';
             
             items.forEach((row, index) => {
@@ -1128,11 +1309,15 @@
                 const peak = colMap.peak !== -1 ? parseInt(row[colMap.peak]) : null;
                 const weeks = colMap.weeks !== -1 ? parseInt(row[colMap.weeks]) : null;
                 const name = getItemName(chartType, row, colMap);
+                const imageId = `img-${chartType}-${index}`;
 
                 html += `
-                    <div class="chart-row-simple">
-                        <div class="position-cell">${position}</div>
-                        <div class="info-cell">
+                    <div class="chart-row-with-image">
+                        <div class="position-number">${position}</div>
+                        <div id="${imageId}" class="chart-image-small placeholder-art">
+                            <i class="fas ${chartsConfig[chartType].icon} text-gray-400"></i>
+                        </div>
+                        <div class="chart-info-expanded">
                             <div class="track-name">${name}</div>
                             <div class="artist-name">
                                 <span class="artist-link" data-artist="${artist}">${artist}</span>
@@ -1143,6 +1328,9 @@
                         </div>
                     </div>
                 `;
+
+                // Carregar imagem
+                loadChartImage(chartType, name, artist, imageId, index);
             });
 
             return html;
@@ -1165,7 +1353,7 @@
                 return { symbol: '▼', class: 'diff-down' };
             }
             if (lowerDiff === '0') {
-                return { symbol: '=', class: '' };
+                return { symbol: '=', class: 'diff-equal' };
             }
             return { symbol: diff, class: '' };
         }
@@ -1175,15 +1363,14 @@
             const chartRun = appState.chartRunData[chartType]?.[key];
             if (!chartRun || chartRun.length === 0) return '';
 
-            // Pegar apenas as últimas 10 semanas para o mini chart run
-            const recentWeeks = chartRun.slice(-10);
-            const maxWeeks = Math.max(...recentWeeks.map(w => w.weeks));
-
+            // Pegar apenas as últimas 12 semanas para o mini chart run
+            const recentWeeks = chartRun.slice(-12);
+            
             return `
                 <div class="chart-run-mini">
                     ${recentWeeks.map(week => {
                         const isPeak = week.position === week.peak;
-                        const isActive = week.position <= 10; // Destacar posições no top 10
+                        const isActive = week.position <= 20; // Destacar posições no top 20
                         let className = 'chart-run-bar';
                         if (isPeak) className += ' peak';
                         if (isActive) className += ' active';
@@ -1208,17 +1395,117 @@
                 type = 'artist';
             }
 
+            // Para Year-End e GOAT, usar mesma lógica
+            if (chartType.includes('yearEnd') || chartType.includes('goat')) {
+                if (chartType.includes('Songs') || chartType === 'songs') {
+                    type = 'artist';
+                } else if (chartType.includes('Albums') || chartType === 'albums') {
+                    type = 'album';
+                    albumQuery = `${artist} ${name}`;
+                } else {
+                    type = 'artist';
+                }
+            }
+
             try {
                 const imageUrl = await getSpotifyImage(query, type, albumQuery);
                 const imageElement = document.getElementById(imageId);
                 
                 if (imageElement && imageUrl) {
-                    imageElement.innerHTML = `<img src="${imageUrl}" alt="${name}" class="chart-image">`;
+                    imageElement.innerHTML = `<img src="${imageUrl}" alt="${name}" class="${imageElement.classList.contains('chart-image-small') ? 'chart-image-small' : 'chart-image'}">`;
                     imageElement.classList.remove('placeholder-art');
                 }
             } catch (error) {
                 console.error('Error loading image:', error);
             }
+        }
+
+        // --- PÁGINA DO ARTISTA ---
+        function renderArtistPage(artistName) {
+            appState.currentView = 'artist';
+            appState.currentArtist = artistName;
+            
+            // Dados mockados para demonstração - substitua com dados reais
+            const artistData = {
+                name: artistName,
+                totalSongs: 45,
+                totalAlbums: 12,
+                numberOneHits: 3,
+                topTenHits: 15,
+                peakPosition: 1,
+                totalWeeks: 120
+            };
+
+            appContainer.innerHTML = `
+                <div class="artist-page">
+                    <button id="backButton" class="back-button mb-6 flex items-center text-accent hover:text-accent-dark font-semibold transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Chart
+                    </button>
+                    
+                    <div class="artist-header">
+                        <div id="artistImageLarge" class="artist-image-large placeholder-art">
+                            <i class="fas fa-user text-4xl text-gray-400"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-4xl font-bold text-secondary mb-2">${artistName}</h1>
+                            <p class="text-gray-600">Detailed artist statistics and chart history</p>
+                        </div>
+                    </div>
+                    
+                    <div class="artist-stats">
+                        <div class="stat-card">
+                            <div class="stat-number">${artistData.totalSongs}</div>
+                            <div class="stat-label">Total Songs</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${artistData.totalAlbums}</div>
+                            <div class="stat-label">Total Albums</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${artistData.numberOneHits}</div>
+                            <div class="stat-label">#1 Hits</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${artistData.topTenHits}</div>
+                            <div class="stat-label">Top 10 Hits</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-6 shadow-sm">
+                        <h2 class="text-2xl font-bold mb-4 text-secondary">Chart History</h2>
+                        <p class="text-gray-600">Detailed chart history will be displayed here...</p>
+                    </div>
+                </div>
+            `;
+
+            // Carregar imagem do artista
+            loadArtistImage(artistName);
+            setupArtistPageListeners();
+        }
+
+        async function loadArtistImage(artistName) {
+            try {
+                const imageUrl = await getSpotifyImage(artistName, 'artist');
+                const imageElement = document.getElementById('artistImageLarge');
+                
+                if (imageElement && imageUrl) {
+                    imageElement.innerHTML = `<img src="${imageUrl}" alt="${artistName}" class="artist-image-large">`;
+                    imageElement.classList.remove('placeholder-art');
+                }
+            } catch (error) {
+                console.error('Error loading artist image:', error);
+            }
+        }
+
+        function setupArtistPageListeners() {
+            document.getElementById('backButton')?.addEventListener('click', () => {
+                const lastState = appState.navigationHistory.pop();
+                if (lastState && lastState.view === 'chart') {
+                    showChartPage(lastState.chart);
+                } else {
+                    renderHomePage();
+                }
+            });
         }
 
         // --- SETUP LISTENERS ---
@@ -1257,6 +1544,23 @@
                     });
                 });
             }
+
+            // Setup artist links
+            setTimeout(() => {
+                document.querySelectorAll('.artist-link').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const artist = this.dataset.artist;
+                        appState.navigationHistory.push({
+                            view: 'chart',
+                            chart: appState.activeChart,
+                            date: appState.currentDate,
+                            year: appState.currentYear
+                        });
+                        renderArtistPage(artist);
+                    });
+                });
+            }, 100);
         }
 
         function setupWeekNavigation() {
@@ -1274,7 +1578,10 @@
         function navigateWeek(direction, dates, currentIndex) {
             const newIndex = currentIndex + direction;
             if (newIndex >= 0 && newIndex < dates.length) {
+                // Sincronizar data entre todos os charts
+                appState.syncDate = dates[newIndex];
                 appState.currentDate = dates[newIndex];
+                
                 if (flatpickrInstance) {
                     flatpickrInstance.setDate(appState.currentDate);
                 }
