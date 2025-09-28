@@ -170,38 +170,35 @@
             text-align: center;
         }
 
-        /* NOVO LAYOUT DO CHART SEMANAL COM CABEÇALHO FIXO */
+        /* LAYOUT DO CHART SEMANAL MELHORADO */
         .chart-container {
             position: relative;
-            max-height: 600px;
-            overflow-y: auto;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
+            overflow: hidden;
         }
 
         .chart-header {
             background-color: var(--header-blue);
             color: white;
-            padding: 12px 16px;
+            padding: 16px 20px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 15px;
             display: grid;
-            grid-template-columns: 80px 60px 1fr 120px 80px 80px 80px;
-            gap: 12px;
+            grid-template-columns: 100px 1fr 140px 100px 100px 100px;
+            gap: 16px;
             align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 10;
         }
 
         .chart-row-weekly {
             display: grid;
-            grid-template-columns: 80px 60px 1fr 120px 80px 80px 80px;
-            gap: 12px;
+            grid-template-columns: 100px 1fr 140px 100px 100px 100px;
+            gap: 16px;
             align-items: center;
-            padding: 12px 16px;
+            padding: 16px 20px;
             border-bottom: 1px solid #e5e7eb;
             transition: background-color 0.2s ease;
+            min-height: 70px;
         }
 
         .chart-row-weekly:nth-child(even) {
@@ -215,14 +212,14 @@
         .position-diff-cell {
             display: flex;
             align-items: center;
-            gap: 8px;
-            justify-content: center;
+            gap: 12px;
+            justify-content: flex-start;
         }
 
         .position-number {
             font-weight: bold;
-            font-size: 16px;
-            min-width: 30px;
+            font-size: 18px;
+            min-width: 35px;
             text-align: center;
         }
 
@@ -233,18 +230,18 @@
         }
 
         .chart-image {
-            width: 40px;
-            height: 40px;
-            border-radius: 4px;
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
             object-fit: cover;
         }
 
         .diff-indicator {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 4px;
-            min-width: 35px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            min-width: 40px;
             text-align: center;
         }
 
@@ -275,19 +272,22 @@
 
         .info-cell {
             min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .track-name {
             font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 2px;
+            font-size: 16px;
+            margin-bottom: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .artist-name {
-            font-size: 12px;
+            font-size: 14px;
             color: #6b7280;
             white-space: nowrap;
             overflow: hidden;
@@ -296,23 +296,29 @@
 
         .units-cell, .lastweek-cell, .peak-cell, .weeks-cell {
             text-align: center;
-            font-size: 12px;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
         }
 
         .units-value {
             font-weight: bold;
             color: #111827;
+            margin-bottom: 2px;
         }
 
         .total-units {
-            font-size: 11px;
+            font-size: 12px;
             color: #6b7280;
         }
 
         .certification {
-            font-size: 11px;
+            font-size: 12px;
             color: #dc2626;
             font-weight: bold;
+            margin-top: 2px;
         }
 
         /* PRIMEIRA POSIÇÃO DESTACADA */
@@ -321,46 +327,47 @@
             background: linear-gradient(135deg, rgba(0, 206, 209, 0.1) 0%, rgba(0, 206, 209, 0.05) 100%);
             border: 2px solid var(--accent);
             border-radius: 8px;
-            margin: 8px;
-            padding: 16px;
+            margin: 12px;
+            padding: 20px;
             display: grid;
-            grid-template-columns: 100px 80px 1fr 140px 100px 100px 100px;
-            gap: 16px;
+            grid-template-columns: 120px 1fr 160px 120px 120px 120px;
+            gap: 20px;
             align-items: center;
+            min-height: 90px;
         }
 
         .first-position .position-number {
-            font-size: 24px;
+            font-size: 28px;
             color: var(--accent);
         }
 
         .first-position .chart-image {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
         }
 
         .first-position .track-name {
-            font-size: 18px;
+            font-size: 20px;
         }
 
         .first-position .artist-name {
-            font-size: 14px;
+            font-size: 16px;
         }
 
         .award-star {
             color: #000;
-            font-size: 16px;
-            margin-left: 4px;
+            font-size: 18px;
+            margin-left: 6px;
         }
 
         .chart-run-mini {
             display: flex;
-            height: 6px;
-            margin-top: 6px;
-            gap: 2px;
+            height: 8px;
+            margin-top: 8px;
+            gap: 3px;
             background: #f3f4f6;
-            padding: 2px;
-            border-radius: 3px;
+            padding: 3px;
+            border-radius: 4px;
         }
 
         .chart-run-bar {
@@ -386,9 +393,10 @@
         .chart-row-with-image {
             display: flex;
             align-items: center;
-            padding: 12px 16px;
+            padding: 16px 20px;
             border-bottom: 1px solid #e5e7eb;
-            gap: 16px;
+            gap: 20px;
+            min-height: 70px;
         }
 
         .chart-row-with-image:nth-child(even) {
@@ -396,9 +404,9 @@
         }
 
         .chart-image-small {
-            width: 40px;
-            height: 40px;
-            border-radius: 4px;
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
             object-fit: cover;
             flex-shrink: 0;
         }
@@ -409,11 +417,11 @@
         }
 
         .badge {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 8px;
-            margin-left: 6px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
         }
 
         .badge-new-peak {
@@ -428,53 +436,114 @@
 
         /* PÁGINA DO ARTISTA */
         .artist-page {
-            max-width: 4xl;
+            max-width: 6xl;
             margin: 0 auto;
         }
 
         .artist-header {
             display: flex;
             align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
-            padding: 20px;
+            gap: 30px;
+            margin-bottom: 40px;
+            padding: 30px;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         }
 
         .artist-image-large {
-            width: 120px;
-            height: 120px;
-            border-radius: 12px;
+            width: 150px;
+            height: 150px;
+            border-radius: 16px;
             object-fit: cover;
         }
 
         .artist-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
         }
 
         .stat-card {
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
         }
 
         .stat-number {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: bold;
             color: var(--accent);
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
         .stat-label {
-            font-size: 0.875rem;
+            font-size: 1rem;
             color: #6b7280;
+            font-weight: 600;
+        }
+
+        .artist-chart-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .chart-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .chart-header,
+            .chart-row-weekly,
+            .first-position {
+                grid-template-columns: 60px 1fr 80px;
+                gap: 10px;
+                font-size: 12px;
+            }
+            
+            .chart-header div:nth-child(4),
+            .chart-header div:nth-child(5),
+            .chart-header div:nth-child(6),
+            .chart-row-weekly > div:nth-child(4),
+            .chart-row-weekly > div:nth-child(5),
+            .chart-row-weekly > div:nth-child(6),
+            .first-position > div:nth-child(4),
+            .first-position > div:nth-child(5),
+            .first-position > div:nth-child(6) {
+                display: none;
+            }
+            
+            .position-number {
+                font-size: 14px;
+            }
+            
+            .track-name {
+                font-size: 14px;
+            }
+            
+            .artist-name {
+                font-size: 12px;
+            }
         }
     </style>
 </head>
@@ -551,8 +620,8 @@
             navigationHistory: [],
             loadedCharts: new Set(),
             availableDates: [],
-            // Nova propriedade para sincronização entre charts
-            syncDate: null
+            syncDate: null,
+            artistStatsData: {} // Novo para armazenar dados da planilha de artistas
         };
 
         // --- ELEMENTOS DOM ---
@@ -595,7 +664,6 @@
                 let searchQuery = query;
                 let searchType = type === 'artist' ? 'artist' : 'album';
                 
-                // Refinar pesquisa para álbuns
                 if (type === 'album' && albumQuery) {
                     searchQuery = albumQuery;
                 }
@@ -621,7 +689,6 @@
             }
         }
 
-        // --- FUNÇÃO PARA CARREGAR IMAGENS PARA CARDS DA TELA INICIAL ---
         async function loadAllCardImages() {
             const cardTypes = ['songs', 'artists', 'albums', 'yearEndSongs', 'yearEndArtists', 'yearEndAlbums', 'goatSongs', 'goatArtists', 'goatAlbums'];
             
@@ -757,11 +824,83 @@
             }
         }
 
+        // NOVA FUNÇÃO PARA CARREGAR DADOS DA PLANILHA DE ARTISTAS
+        async function fetchArtistStats() {
+            try {
+                const response = await fetch(`${chartsConfig.artistStats.url}&_=${Date.now()}`);
+                if (!response.ok) throw new Error('Failed to load artist statistics');
+                
+                let csvText = await response.text();
+                if (csvText.charCodeAt(0) === 0xFEFF) csvText = csvText.substring(1);
+
+                const rows = csvText.trim().split('\n').map(row => parseCsvRow(row));
+                if (rows.length < 2) throw new Error('Not enough artist data');
+
+                const header = rows[0].map(h => h.toLowerCase().trim());
+                const data = rows.slice(1);
+                
+                // Mapear colunas
+                const colMap = {
+                    artist: findIndex(header, ['artist', 'artists']),
+                    chart: findIndex(header, ['chart']),
+                    item: findIndex(header, ['item']),
+                    peak: findIndex(header, ['peak']),
+                    weeks: findIndex(header, ['weeks']),
+                    totalUnits: findIndex(header, ['total units'])
+                };
+
+                // Processar dados dos artistas
+                appState.artistStatsData = {};
+                
+                data.forEach(row => {
+                    const artist = row[colMap.artist];
+                    const chart = row[colMap.chart];
+                    const item = row[colMap.item];
+                    const peak = parseInt(row[colMap.peak]) || 0;
+                    const weeks = parseInt(row[colMap.weeks]) || 0;
+                    const totalUnits = row[colMap.totalUnits] || '0';
+
+                    if (!artist) return;
+
+                    if (!appState.artistStatsData[artist]) {
+                        appState.artistStatsData[artist] = {
+                            'Hot 100 Songs': { entries: [], count: 0, numberOnes: 0, topTens: 0, totalUnits: 0 },
+                            'Top 100 Albums': { entries: [], count: 0, numberOnes: 0, topTens: 0, totalUnits: 0 },
+                            'Artist 50': { entries: [], count: 0, numberOnes: 0, topTens: 0, totalUnits: 0 }
+                        };
+                    }
+
+                    if (appState.artistStatsData[artist][chart]) {
+                        const entry = {
+                            item: item,
+                            peak: peak,
+                            weeks: weeks,
+                            totalUnits: totalUnits
+                        };
+                        
+                        appState.artistStatsData[artist][chart].entries.push(entry);
+                        appState.artistStatsData[artist][chart].count++;
+                        
+                        if (peak === 1) appState.artistStatsData[artist][chart].numberOnes++;
+                        if (peak <= 10) appState.artistStatsData[artist][chart].topTens++;
+                        
+                        // Somar total units
+                        const units = parseFloat(totalUnits) || 0;
+                        appState.artistStatsData[artist][chart].totalUnits += units;
+                    }
+                });
+
+                return true;
+            } catch (error) {
+                console.error('Error loading artist stats:', error);
+                return false;
+            }
+        }
+
         async function processChartData(chartType, rows) {
             const header = rows[0].map(h => h.toLowerCase().trim());
             const data = rows.slice(1);
             
-            // Mapear colunas
             const colMap = {
                 date: findIndex(header, ['date', 'chart date']),
                 position: findIndex(header, ['position', 'rank', 'pos']),
@@ -844,7 +983,6 @@
                 appState.chartData[chartType][date] = dateGroups[date];
             });
 
-            // Sincronizar data se já houver uma data definida
             if (appState.syncDate && appState.chartData[chartType][appState.syncDate]) {
                 appState.currentDate = appState.syncDate;
             } else {
@@ -919,7 +1057,6 @@
                 });
             });
 
-            // Ordenar chart runs por data
             for (const key in appState.chartRunData[chartType]) {
                 appState.chartRunData[chartType][key].sort((a, b) => new Date(a.date) - new Date(b.date));
             }
@@ -972,7 +1109,6 @@
             `;
             
             setupHomePageListeners();
-            // Carregar imagens para todos os cards
             loadAllCardImages();
         }
 
@@ -1035,13 +1171,11 @@
             const isYearEnd = chartType.includes('yearEnd');
             const isGoat = chartType.includes('goat');
             
-            // Configurar data atual
             if (isYearEnd) {
                 const years = Object.keys(appState.chartData[chartType] || {}).sort((a, b) => b - a);
                 appState.currentYear = years[0] || new Date().getFullYear().toString();
             } else if (!isGoat) {
                 const dates = appState.availableDates.sort();
-                // Usar data sincronizada se disponível, senão a mais recente
                 appState.currentDate = appState.syncDate || dates[dates.length - 1] || null;
             }
             
@@ -1084,7 +1218,6 @@
                 </div>
             `;
 
-            // Inicializar Flatpickr após renderizar
             if (!isYearEnd && !isGoat) {
                 initializeDatePicker();
             }
@@ -1103,18 +1236,20 @@
                     dateFormat: "Y-m-d",
                     onChange: function(selectedDates, dateStr) {
                         if (dateStr) {
-                            // Sincronizar data entre todos os charts
-                            appState.syncDate = dateStr;
-                            appState.currentDate = dateStr;
-                            
-                            document.getElementById('chartContainer').innerHTML = renderChartItems();
-                            updateWeekNavButtons();
-                            // Scroll para o topo
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            handleDateChange(dateStr);
                         }
                     }
                 });
             }
+        }
+
+        function handleDateChange(dateStr) {
+            appState.syncDate = dateStr;
+            appState.currentDate = dateStr;
+            
+            document.getElementById('chartContainer').innerHTML = renderChartItems();
+            updateWeekNavButtons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function getChartNavButtons(chartType, isYearEnd, isGoat) {
@@ -1208,7 +1343,6 @@
             let html = `
                 <div class="chart-header">
                     <div>This Week</div>
-                    <div>Image</div>
                     <div>Song/Album/Artist</div>
                     <div>Units/Total/Cert.</div>
                     <div>Last Week</div>
@@ -1232,17 +1366,16 @@
                 const diffInfo = getDiffInfo(diff);
                 const imageId = `img-${chartType}-${index}`;
 
-                // Primeira posição destacada
                 if (position === 1) {
                     html += `
                         <div class="first-position">
                             <div class="position-diff-cell">
                                 <div class="position-number">${position}</div>
                                 ${diffInfo ? `<div class="diff-indicator ${diffInfo.class}">${diffInfo.symbol}</div>` : ''}
-                            </div>
-                            <div class="image-cell">
-                                <div id="${imageId}" class="chart-image placeholder-art">
-                                    <i class="fas ${chartsConfig[chartType].icon} text-gray-400"></i>
+                                <div class="image-cell">
+                                    <div id="${imageId}" class="chart-image placeholder-art">
+                                        <i class="fas ${chartsConfig[chartType].icon} text-gray-400"></i>
+                                    </div>
                                 </div>
                             </div>
                             <div class="info-cell">
@@ -1269,10 +1402,10 @@
                             <div class="position-diff-cell">
                                 <div class="position-number">${position}</div>
                                 ${diffInfo ? `<div class="diff-indicator ${diffInfo.class}">${diffInfo.symbol}</div>` : ''}
-                            </div>
-                            <div class="image-cell">
-                                <div id="${imageId}" class="chart-image placeholder-art">
-                                    <i class="fas ${chartsConfig[chartType].icon} text-gray-400"></i>
+                                <div class="image-cell">
+                                    <div id="${imageId}" class="chart-image placeholder-art">
+                                        <i class="fas ${chartsConfig[chartType].icon} text-gray-400"></i>
+                                    </div>
                                 </div>
                             </div>
                             <div class="info-cell">
@@ -1293,7 +1426,6 @@
                     `;
                 }
 
-                // Carregar imagem
                 loadChartImage(chartType, name, artist, imageId, index);
             });
 
@@ -1308,6 +1440,7 @@
                 const artist = row[colMap.artist] || 'Unknown';
                 const peak = colMap.peak !== -1 ? parseInt(row[colMap.peak]) : null;
                 const weeks = colMap.weeks !== -1 ? parseInt(row[colMap.weeks]) : null;
+                const totalUnits = colMap.totalUnits !== -1 ? row[colMap.totalUnits] : null;
                 const name = getItemName(chartType, row, colMap);
                 const imageId = `img-${chartType}-${index}`;
 
@@ -1322,14 +1455,14 @@
                             <div class="artist-name">
                                 <span class="artist-link" data-artist="${artist}">${artist}</span>
                             </div>
-                            <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">
+                            <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
                                 ${peak ? `Peak: ${peak} • ` : ''}${weeks ? `Weeks: ${weeks}` : ''}
+                                ${totalUnits && totalUnits !== '0' ? ` • ${totalUnits} units` : ''}
                             </div>
                         </div>
                     </div>
                 `;
 
-                // Carregar imagem
                 loadChartImage(chartType, name, artist, imageId, index);
             });
 
@@ -1363,14 +1496,13 @@
             const chartRun = appState.chartRunData[chartType]?.[key];
             if (!chartRun || chartRun.length === 0) return '';
 
-            // Pegar apenas as últimas 12 semanas para o mini chart run
             const recentWeeks = chartRun.slice(-12);
             
             return `
                 <div class="chart-run-mini">
                     ${recentWeeks.map(week => {
                         const isPeak = week.position === week.peak;
-                        const isActive = week.position <= 20; // Destacar posições no top 20
+                        const isActive = week.position <= 20;
                         let className = 'chart-run-bar';
                         if (isPeak) className += ' peak';
                         if (isActive) className += ' active';
@@ -1385,17 +1517,15 @@
             let type = 'artist';
             let albumQuery = null;
 
-            // Definir critérios de imagem
             if (chartType === 'songs' || chartType.includes('Songs')) {
-                type = 'artist'; // Imagem do artista para músicas
+                type = 'artist';
             } else if (chartType === 'albums' || chartType.includes('Albums')) {
                 type = 'album';
-                albumQuery = `${artist} ${name}`; // Pesquisa refinada para álbuns
+                albumQuery = `${artist} ${name}`;
             } else {
                 type = 'artist';
             }
 
-            // Para Year-End e GOAT, usar mesma lógica
             if (chartType.includes('yearEnd') || chartType.includes('goat')) {
                 if (chartType.includes('Songs') || chartType === 'songs') {
                     type = 'artist';
@@ -1420,21 +1550,32 @@
             }
         }
 
-        // --- PÁGINA DO ARTISTA ---
+        // --- PÁGINA DO ARTISTA COM DADOS REAIS ---
         function renderArtistPage(artistName) {
             appState.currentView = 'artist';
             appState.currentArtist = artistName;
             
-            // Dados mockados para demonstração - substitua com dados reais
-            const artistData = {
-                name: artistName,
-                totalSongs: 45,
-                totalAlbums: 12,
-                numberOneHits: 3,
-                topTenHits: 15,
-                peakPosition: 1,
-                totalWeeks: 120
-            };
+            const artistData = appState.artistStatsData[artistName];
+            if (!artistData) {
+                appContainer.innerHTML = `
+                    <div class="text-center p-8">
+                        <button id="backButton" class="back-button mb-6 flex items-center text-accent hover:text-accent-dark font-semibold transition-colors">
+                            <i class="fas fa-arrow-left mr-2"></i> Back to Chart
+                        </button>
+                        <div class="bg-white rounded-lg p-8 shadow-sm">
+                            <i class="fas fa-user-slash text-6xl text-gray-400 mb-4"></i>
+                            <h2 class="text-2xl font-bold text-secondary mb-2">Artist Not Found</h2>
+                            <p class="text-gray-600">No data available for ${artistName}</p>
+                        </div>
+                    </div>
+                `;
+                setupArtistPageListeners();
+                return;
+            }
+
+            const hot100 = artistData['Hot 100 Songs'] || { entries: [], count: 0, numberOnes: 0, topTens: 0, totalUnits: 0 };
+            const topAlbums = artistData['Top 100 Albums'] || { entries: [], count: 0, numberOnes: 0, topTens: 0, totalUnits: 0 };
+            const artistChart = artistData['Artist 50'] || { entries: [], count: 0, numberOnes: 0, topTens: 0, totalUnits: 0 };
 
             appContainer.innerHTML = `
                 <div class="artist-page">
@@ -1454,33 +1595,60 @@
                     
                     <div class="artist-stats">
                         <div class="stat-card">
-                            <div class="stat-number">${artistData.totalSongs}</div>
-                            <div class="stat-label">Total Songs</div>
+                            <div class="stat-number">${hot100.count}</div>
+                            <div class="stat-label">Hot 100 Songs</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-number">${artistData.totalAlbums}</div>
-                            <div class="stat-label">Total Albums</div>
+                            <div class="stat-number">${topAlbums.count}</div>
+                            <div class="stat-label">Top 100 Albums</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-number">${artistData.numberOneHits}</div>
+                            <div class="stat-number">${hot100.numberOnes + topAlbums.numberOnes}</div>
                             <div class="stat-label">#1 Hits</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-number">${artistData.topTenHits}</div>
+                            <div class="stat-number">${hot100.topTens + topAlbums.topTens}</div>
                             <div class="stat-label">Top 10 Hits</div>
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-lg p-6 shadow-sm">
-                        <h2 class="text-2xl font-bold mb-4 text-secondary">Chart History</h2>
-                        <p class="text-gray-600">Detailed chart history will be displayed here...</p>
-                    </div>
+                    ${renderArtistChartSection('Hot 100 Songs', hot100)}
+                    ${renderArtistChartSection('Top 100 Albums', topAlbums)}
+                    ${renderArtistChartSection('Artist 50', artistChart)}
                 </div>
             `;
 
-            // Carregar imagem do artista
             loadArtistImage(artistName);
             setupArtistPageListeners();
+        }
+
+        function renderArtistChartSection(title, chartData) {
+            if (chartData.entries.length === 0) return '';
+            
+            const sortedEntries = [...chartData.entries].sort((a, b) => a.peak - b.peak);
+            
+            return `
+                <div class="artist-chart-section">
+                    <h2 class="text-2xl font-bold mb-4 text-secondary">${title}</h2>
+                    <div class="mb-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div><strong>Total Entries:</strong> ${chartData.count}</div>
+                        <div><strong>#1 Hits:</strong> ${chartData.numberOnes}</div>
+                        <div><strong>Top 10 Hits:</strong> ${chartData.topTens}</div>
+                        <div><strong>Total Units:</strong> ${chartData.totalUnits.toLocaleString()}</div>
+                    </div>
+                    <div class="space-y-2">
+                        ${sortedEntries.slice(0, 10).map(entry => `
+                            <div class="chart-item">
+                                <div class="font-medium flex-1">${entry.item}</div>
+                                <div class="text-sm text-gray-600">
+                                    Peak: #${entry.peak} • Weeks: ${entry.weeks}
+                                    ${entry.totalUnits && entry.totalUnits !== '0' ? ` • Units: ${entry.totalUnits}` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
         }
 
         async function loadArtistImage(artistName) {
@@ -1530,12 +1698,10 @@
                 });
             });
 
-            // Setup week navigation
             if (!appState.activeChart.includes('yearEnd') && !appState.activeChart.includes('goat')) {
                 setupWeekNavigation();
             }
 
-            // Setup year selector
             if (appState.activeChart.includes('yearEnd')) {
                 document.querySelectorAll('.year-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
@@ -1545,7 +1711,6 @@
                 });
             }
 
-            // Setup artist links
             setTimeout(() => {
                 document.querySelectorAll('.artist-link').forEach(link => {
                     link.addEventListener('click', function(e) {
@@ -1567,10 +1732,24 @@
             const dates = appState.availableDates.sort();
             const currentIndex = dates.indexOf(appState.currentDate);
 
-            document.getElementById('prevWeekBtn')?.addEventListener('click', () => navigateWeek(-1, dates, currentIndex));
-            document.getElementById('nextWeekBtn')?.addEventListener('click', () => navigateWeek(1, dates, currentIndex));
-            document.getElementById('bottomPrevWeekBtn')?.addEventListener('click', () => navigateWeek(-1, dates, currentIndex));
-            document.getElementById('bottomNextWeekBtn')?.addEventListener('click', () => navigateWeek(1, dates, currentIndex));
+            // Corrigir os event listeners para as setas do topo
+            const prevBtn = document.getElementById('prevWeekBtn');
+            const nextBtn = document.getElementById('nextWeekBtn');
+            const bottomPrevBtn = document.getElementById('bottomPrevWeekBtn');
+            const bottomNextBtn = document.getElementById('bottomNextWeekBtn');
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => navigateWeek(-1, dates, currentIndex));
+            }
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => navigateWeek(1, dates, currentIndex));
+            }
+            if (bottomPrevBtn) {
+                bottomPrevBtn.addEventListener('click', () => navigateWeek(-1, dates, currentIndex));
+            }
+            if (bottomNextBtn) {
+                bottomNextBtn.addEventListener('click', () => navigateWeek(1, dates, currentIndex));
+            }
 
             updateWeekNavButtons(dates, currentIndex);
         }
@@ -1578,17 +1757,7 @@
         function navigateWeek(direction, dates, currentIndex) {
             const newIndex = currentIndex + direction;
             if (newIndex >= 0 && newIndex < dates.length) {
-                // Sincronizar data entre todos os charts
-                appState.syncDate = dates[newIndex];
-                appState.currentDate = dates[newIndex];
-                
-                if (flatpickrInstance) {
-                    flatpickrInstance.setDate(appState.currentDate);
-                }
-                document.getElementById('chartContainer').innerHTML = renderChartItems();
-                updateWeekNavButtons(dates, newIndex);
-                // Scroll para o topo
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                handleDateChange(dates[newIndex]);
             }
         }
 
@@ -1620,8 +1789,11 @@
             showMessage('loading', 'Loading charts data...');
 
             try {
-                // Carregar apenas os charts essenciais primeiro
-                const essentialCharts = ['songs', 'artists', 'albums', 'artistStats'];
+                // Carregar dados de artistas primeiro
+                await fetchArtistStats();
+                
+                // Carregar charts essenciais
+                const essentialCharts = ['songs', 'artists', 'albums'];
                 const results = await Promise.allSettled(
                     essentialCharts.map(chart => fetchChartData(chart))
                 );
@@ -1632,14 +1804,11 @@
                 const backgroundCharts = ['yearEndSongs', 'yearEndArtists', 'yearEndAlbums', 'goatSongs', 'goatArtists', 'goatAlbums'];
                 backgroundCharts.forEach(chart => {
                     fetchChartData(chart).then(success => {
-                        if (success) {
-                            // Atualizar a página se necessário
-                            if (appState.currentView === 'home') {
-                                const card = document.querySelector(`[data-chart="${chart}"]`);
-                                if (card) {
-                                    const newContent = renderChartCard(chart, chartsConfig[chart].title);
-                                    card.outerHTML = newContent;
-                                }
+                        if (success && appState.currentView === 'home') {
+                            const card = document.querySelector(`[data-chart="${chart}"]`);
+                            if (card) {
+                                const newContent = renderChartCard(chart, chartsConfig[chart].title);
+                                card.outerHTML = newContent;
                             }
                         }
                     });
