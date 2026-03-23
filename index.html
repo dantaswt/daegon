@@ -145,8 +145,11 @@
         .nav-charts-wrapper .chart-nav-btn { font-size: 0.75rem; padding: 0.4rem 0.8rem; }
         @media (min-width: 768px) { .nav-charts-wrapper .chart-nav-btn { font-size: 0.875rem; padding: 0.5rem 1rem; } }
         .skeleton-card { background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 12px; height: 160px; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        .chart-card.loaded { animation: fadeIn 0.3s ease-out; }
+        .progress-bar-container { background: #1a1a1a; border-radius: 10px; height: 4px; width: 100%; margin: 20px 0; overflow: hidden; }
+        .progress-bar { background: var(--accent); height: 100%; width: 0%; transition: width 0.3s ease; border-radius: 10px; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -185,21 +188,21 @@
         const goatList = ['goatSongs', 'goatArtists', 'goatAlbums'];
 
         const chartsConfig = {
-            songs: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=904867620', title: 'Hot 100', icon: 'fa-music', loaded: false },
-            artists: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1568177610', title: 'Artist 50', icon: 'fa-user', loaded: false },
-            albums: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1940039611', title: 'Top 100 Albums', icon: 'fa-compact-disc', loaded: false },
-            radioSongs: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1681272096', title: 'Radio Songs', icon: 'fa-radio', loaded: false },
-            topStreamingAlbums: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1028545573', title: 'Top Streaming Albums', icon: 'fa-headphones', loaded: false },
-            topAlbumSales: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1111633725', title: 'Top Album Sales', icon: 'fa-chart-simple', loaded: false },
-            streamingSongs: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=626144821', title: 'Streaming Songs', icon: 'fa-cloud-music', loaded: false },
-            digitalSongsSales: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=302176914', title: 'Digital Songs Sales', icon: 'fa-download', loaded: false },
-            yearEndSongs: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=530686468', title: 'Year-End Songs', icon: 'fa-calendar', loaded: false },
-            yearEndArtists: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1597569311', title: 'Year-End Artists', icon: 'fa-calendar', loaded: false },
-            yearEndAlbums: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=897935603', title: 'Year-End Albums', icon: 'fa-calendar', loaded: false },
-            goatSongs: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1157278896', title: 'Songs', icon: 'fa-trophy', loaded: false },
-            goatArtists: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=222299678', title: 'Artists', icon: 'fa-trophy', loaded: false },
-            goatAlbums: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1548244755', title: 'Albums', icon: 'fa-trophy', loaded: false },
-            artistStats: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1519606558', title: 'Artist Statistics', icon: 'fa-chart-bar', loaded: false }
+            songs: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=904867620', title: 'Hot 100', icon: 'fa-music', loaded: false, order: 1 },
+            artists: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1568177610', title: 'Artist 50', icon: 'fa-user', loaded: false, order: 2 },
+            albums: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1940039611', title: 'Top 100 Albums', icon: 'fa-compact-disc', loaded: false, order: 3 },
+            radioSongs: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1681272096', title: 'Radio Songs', icon: 'fa-radio', loaded: false, order: 4 },
+            topStreamingAlbums: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1028545573', title: 'Top Streaming Albums', icon: 'fa-headphones', loaded: false, order: 5 },
+            topAlbumSales: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1111633725', title: 'Top Album Sales', icon: 'fa-chart-simple', loaded: false, order: 6 },
+            streamingSongs: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=626144821', title: 'Streaming Songs', icon: 'fa-cloud-music', loaded: false, order: 7 },
+            digitalSongsSales: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=302176914', title: 'Digital Songs Sales', icon: 'fa-download', loaded: false, order: 8 },
+            yearEndSongs: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=530686468', title: 'Year-End Songs', icon: 'fa-calendar', loaded: false, order: 9 },
+            yearEndArtists: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1597569311', title: 'Year-End Artists', icon: 'fa-calendar', loaded: false, order: 10 },
+            yearEndAlbums: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=897935603', title: 'Year-End Albums', icon: 'fa-calendar', loaded: false, order: 11 },
+            goatSongs: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1157278896', title: 'Songs', icon: 'fa-trophy', loaded: false, order: 12 },
+            goatArtists: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=222299678', title: 'Artists', icon: 'fa-trophy', loaded: false, order: 13 },
+            goatAlbums: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1548244755', title: 'Albums', icon: 'fa-trophy', loaded: false, order: 14 },
+            artistStats: { url: 'https://docs.google.com/spreadsheets/d/1t6_7SOlspmNYrXq8PSfJ74frIdrWwQBFITQ3bQmRzeg/export?format=csv&gid=1519606558', title: 'Artist Statistics', icon: 'fa-chart-bar', loaded: false, order: 15 }
         };
 
         const chartBeatConfig = {
@@ -212,7 +215,7 @@
             activeChart: 'songs', chartData: {}, currentDate: null, currentView: 'home', currentArtist: null, currentYear: new Date().getFullYear().toString(),
             colMaps: {}, top3Data: {}, chartRunData: {}, navigationHistory: [], chartBeatData: { hot100: [], artists: [], top100Albums: [] },
             currentBlog: 'hot100', sharedDate: null, artistDetailsData: {}, activeTag: null, allArtistsList: [], lastChart: null, lastChartDate: null, lastChartYear: null,
-            isInitialized: false
+            loadingProgress: 0, loadedCharts: 0, totalCharts: 0
         };
 
         const appContainer = document.getElementById('app'), modal = document.getElementById('itemDetailsModal'), modalContent = document.getElementById('modalContent'), closeModal = document.getElementById('closeModal');
@@ -485,12 +488,53 @@
         }
 
         // ==================== RENDER FUNCTIONS ====================
+        function updateChartCard(ct) {
+            const card = document.querySelector(`.chart-card[data-chart="${ct}"]`);
+            if (card) {
+                const top = appState.top3Data[ct] || [];
+                const isGoat = ct.includes('goat');
+                const title = chartsConfig[ct]?.title;
+                
+                if (!top.length) {
+                    card.innerHTML = `<div class="flex items-center justify-between mb-2 md:mb-3">
+                        <h4 class="font-semibold text-sm md:text-base text-white">${title}</h4>
+                        <span class="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded-full">No data</span>
+                    </div>
+                    <div class="text-center text-gray-500 text-xs py-4">No data available</div>`;
+                } else {
+                    card.innerHTML = `<div class="flex items-center justify-between mb-2 md:mb-3">
+                        <h4 class="font-semibold text-sm md:text-base text-white">${title}</h4>
+                        <span class="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded-full">Top ${top.length}</span>
+                    </div>
+                    <div class="space-y-1 md:space-y-2">
+                        ${top.map((item, i) => `<div class="flex items-center text-xs md:text-sm text-gray-300"><span class="font-bold w-5 md:w-6 ${i===0?'text-accent':'text-gray-400'} ${isGoat && i===0 ? 'goat-text' : ''}">${item.position}</span><span class="truncate break-text">${item.name || 'Unknown'}</span></div>`).join('')}
+                    </div>`;
+                }
+                card.classList.add('loaded');
+                
+                // Update progress bar
+                appState.loadedCharts++;
+                const progress = (appState.loadedCharts / appState.totalCharts) * 100;
+                const progressBar = document.querySelector('.progress-bar');
+                if (progressBar) progressBar.style.width = `${progress}%`;
+                if (progress >= 100) {
+                    const progressContainer = document.querySelector('.progress-bar-container');
+                    if (progressContainer) progressContainer.style.display = 'none';
+                }
+            }
+        }
+        
         function renderHomeSkeleton() {
             const firstRowCharts = weeklyChartList.slice(0, 4);
             const secondRowCharts = weeklyChartList.slice(4, 8);
+            const allWeeklyCharts = [...weeklyChartList, ...yearEndList, ...goatList];
+            appState.totalCharts = allWeeklyCharts.length;
             
             return `<div class="max-w-7xl mx-auto fade-in">
                 <div class="text-center mb-8 md:mb-12"><h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">daegon charts</h2><p class="text-gray-400 text-sm md:text-base">Your personal charts based on Last.fm data. Track your most played songs, artists, and albums.</p></div>
+                
+                <div class="progress-bar-container"><div class="progress-bar"></div></div>
+                <p class="text-center text-xs text-gray-500 mb-4">Loading charts <span id="progressCount">0</span>/<span id="totalCount">${appState.totalCharts}</span></p>
                 
                 <div class="circle-cards-grid mb-12 md:mb-16">
                     ${firstRowCharts.map(c=>`<div class="circle-card-container" data-chart="${c}"><div class="circle-card" id="circle-${c}"><div class="w-full h-full placeholder-art"><i class="fas ${chartsConfig[c]?.icon} text-2xl md:text-3xl text-gray-600"></i></div><div class="circle-card-content"><h3 class="circle-card-title">${chartsConfig[c]?.title}</h3></div></div><div class="circle-card-label text-xs md:text-sm">${chartsConfig[c]?.title}</div></div>`).join('')}
@@ -501,9 +545,9 @@
                 
                 <div class="mb-12 md:mb-16"><h3 class="text-xl md:text-2xl font-bold mb-6 section-title text-white">Chart Beat - Latest News</h3><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div></div>
                 
-                <div class="mb-12 md:mb-16"><h3 class="text-xl md:text-2xl font-bold mb-6 section-title text-white">Weekly Charts</h3><div id="weeklyChartsGrid" class="weekly-charts-grid">${weeklyChartList.map(()=>`<div class="skeleton-card h-32"></div>`).join('')}</div></div>
-                <div class="mb-12 md:mb-16"><h3 class="text-xl md:text-2xl font-bold mb-6 section-title text-white">Year-End Charts</h3><div id="yearEndChartsGrid" class="weekly-charts-grid">${yearEndList.map(()=>`<div class="skeleton-card h-32"></div>`).join('')}</div></div>
-                <div class="mb-12 md:mb-16"><h3 class="text-xl md:text-2xl font-bold mb-6 section-title goat-title text-white">Greatest of All Time</h3><div id="goatChartsGrid" class="weekly-charts-grid">${goatList.map(()=>`<div class="skeleton-card h-32"></div>`).join('')}</div></div>
+                <div class="mb-12 md:mb-16"><h3 class="text-xl md:text-2xl font-bold mb-6 section-title text-white">Weekly Charts</h3><div id="weeklyChartsGrid" class="weekly-charts-grid">${weeklyChartList.map(c=>`<div class="chart-card" data-chart="${c}"><div class="loading-skeleton h-32"></div></div>`).join('')}</div></div>
+                <div class="mb-12 md:mb-16"><h3 class="text-xl md:text-2xl font-bold mb-6 section-title text-white">Year-End Charts</h3><div id="yearEndChartsGrid" class="weekly-charts-grid">${yearEndList.map(c=>`<div class="chart-card" data-chart="${c}"><div class="loading-skeleton h-32"></div></div>`).join('')}</div></div>
+                <div class="mb-12 md:mb-16"><h3 class="text-xl md:text-2xl font-bold mb-6 section-title goat-title text-white">Greatest of All Time</h3><div id="goatChartsGrid" class="weekly-charts-grid">${goatList.map(c=>`<div class="chart-card" data-chart="${c}"><div class="loading-skeleton h-32"></div></div>`).join('')}</div></div>
             </div>`;
         }
         
@@ -534,16 +578,6 @@
             document.querySelectorAll('.chart-card, .circle-card-container').forEach(el=>el.addEventListener('click',()=>showChart(el.dataset.chart)));
             setTimeout(()=>loadCircleImages(),100);
             setupBackToTop();
-        }
-        
-        function updateHomeCharts() {
-            const weeklyGrid = document.getElementById('weeklyChartsGrid');
-            const yearEndGrid = document.getElementById('yearEndChartsGrid');
-            const goatGrid = document.getElementById('goatChartsGrid');
-            if (weeklyGrid) weeklyGrid.innerHTML = weeklyChartList.map(c=>renderChartCard(c, chartsConfig[c]?.title)).join('');
-            if (yearEndGrid) yearEndGrid.innerHTML = yearEndList.map(c=>renderChartCard(c, chartsConfig[c]?.title)).join('');
-            if (goatGrid) goatGrid.innerHTML = goatList.map(c=>renderChartCard(c, chartsConfig[c]?.title)).join('');
-            document.querySelectorAll('.chart-card').forEach(el=>el.addEventListener('click',()=>showChart(el.dataset.chart)));
         }
         
         function renderChartCard(ct, title) {
@@ -841,53 +875,53 @@
             btn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
         }
         
-        async function init(){
-            // Mostra o skeleton imediatamente
-            appContainer.innerHTML = renderHomeSkeleton();
+        async function loadChartsProgressively() {
+            const allCharts = [...weeklyChartList, ...yearEndList, ...goatList];
             
-            // Carrega os dados em segundo plano
-            setTimeout(async () => {
-                try{
-                    // Load weekly charts first
-                    const priorityCharts = [...weeklyChartList];
-                    await Promise.all(priorityCharts.map(ct => fetchChartData(ct)));
-                    
-                    // Set shared date
-                    for(let ct of weeklyChartList) {
-                        let dates = Object.keys(appState.chartData[ct]||{});
+            // Carrega um chart por vez, atualizando a UI a cada conclusão
+            for (let i = 0; i < allCharts.length; i++) {
+                const ct = allCharts[i];
+                await fetchChartData(ct);
+                
+                // Atualiza o card específico que acabou de carregar
+                updateChartCard(ct);
+                
+                // Atualiza contador de progresso
+                const progressCount = document.getElementById('progressCount');
+                if (progressCount) {
+                    progressCount.textContent = i + 1;
+                }
+                
+                // Se for o primeiro chart, define a data compartilhada
+                if (i === 0) {
+                    for(let wct of weeklyChartList) {
+                        let dates = Object.keys(appState.chartData[wct]||{});
                         if(dates.length) {
                             appState.sharedDate = dates[dates.length-1];
                             break;
                         }
                     }
-                    
-                    // Render home with real data
-                    renderHome();
-                    
-                    // Load background data
-                    const backgroundCharts = [...yearEndList, ...goatList, 'artistStats'];
-                    backgroundCharts.forEach(ct => {
-                        fetchChartData(ct).then(() => {
-                            if (ct.includes('yearEnd') || ct.includes('goat')) {
-                                updateHomeCharts();
-                            }
-                            if (ct === 'artistStats') {
-                                if (appState.currentView === 'allArtists') {
-                                    showAllArtists();
-                                }
-                            }
-                        });
-                    });
-                    
-                    // Load Chart Beat
-                    fetchChartBeat();
-                    
-                } catch(e){ 
-                    console.error(e); 
-                    appContainer.innerHTML = `<div class="flex flex-col items-center justify-center p-8"><i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i><p class="text-center text-red-500">Error loading data: ${e.message}</p><button id="retryBtn" class="mt-4 px-4 py-2 bg-accent text-black rounded-md">Try Again</button></div>`;
-                    document.getElementById('retryBtn')?.addEventListener('click', init);
                 }
-            }, 10);
+            }
+            
+            // Após carregar todos os charts, carrega o resto
+            await fetchChartData('artistStats');
+            fetchChartBeat();
+            
+            // Carrega imagens dos círculos
+            setTimeout(() => loadCircleImages(), 100);
+        }
+        
+        async function init(){
+            // Mostra o skeleton imediatamente
+            appContainer.innerHTML = renderHomeSkeleton();
+            
+            // Define contadores
+            const totalSpan = document.getElementById('totalCount');
+            if (totalSpan) totalSpan.textContent = appState.totalCharts;
+            
+            // Carrega os charts progressivamente
+            loadChartsProgressively();
         }
         
         document.addEventListener('DOMContentLoaded',()=>{
